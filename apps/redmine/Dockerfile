@@ -9,4 +9,4 @@ RUN bundle config set --local deployment 'false' && \
     bundle install && \
     bundle config set --local deployment 'true'
 
-LABEL org.opencontainers.image.source="https://github.com/kopia/kopia"
+LABEL org.opencontainers.image.source="https://github.com/bitnami/containers"
