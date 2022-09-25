@@ -4,7 +4,7 @@ FROM bitnami/redmine:5-debian-11
 
 WORKDIR /opt/bitnami/redmine
 
-COPY redmine_openid_connect /opt/bitnami/redmine/plugins/redmine_openid_connect
+COPY ./apps/redmine/redmine_openid_connect /opt/bitnami/redmine/plugins/redmine_openid_connect
 RUN bundle config set --local deployment 'false' && \
     bundle install && \
     bundle config set --local deployment 'true'
