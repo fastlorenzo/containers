@@ -25,7 +25,6 @@ module RedmineOpenidConnect
     
     # performs redirect to SSO server
     def oic_login
-      Rails.logger.info "EXECUTING oic_login"
       if session[:oic_session_id].blank?
         oic_session = OicSession.create
         session[:oic_session_id] = oic_session.id
@@ -94,7 +93,7 @@ module RedmineOpenidConnect
         end
 
         # Check if there's already an existing user
-        user = User.find_by_login(oic_session.parse_email(user_info["email"])[:login])
+        user = User.find_by_login(user_info["preferred_username"] || oic_session.parse_email(user_info["email"])[:login])
         if user.nil?
           user = User.find_by_mail(user_info["email"])
         end
@@ -111,7 +110,7 @@ module RedmineOpenidConnect
 
           user = User.new
 
-          user.login = oic_session.parse_email(user_info["email"])[:login] || user_info["preferred_username"]
+          user.login = user_info["preferred_username"] || oic_session.parse_email(user_info["email"])[:login]
           user.login ||= [user_info["given_name"], user_info["family_name"]]*"."
 
           firstname = user_info["given_name"]
