@@ -3,6 +3,7 @@ class OicSession < ActiveRecord::Base
 
   before_create :randomize_state!
   before_create :randomize_nonce!
+  before_create :clean_old_oic_with_null_user
 
   def self.client_config
     Setting.plugin_redmine_openid_connect
@@ -157,6 +158,19 @@ class OicSession < ActiveRecord::Base
 
     return false
   end
+  
+  def parse_email email
+    email_data = email && email.is_a?(String) ? email.match(/(.*?)@(.*)/) : nil
+    return {:login => email_data[1], :domain => email_data[2]} if email_data
+  end
+  
+  def allowed_domain_for?
+    allowed_domains = client_config['allowed_domains']
+    return unless allowed_domains
+    allowed_domains = allowed_domains.split
+    return true if allowed_domains.empty?
+    allowed_domains.index(self.parse_email(user["email"])[:domain])
+  end
 
   def admin?
     if client_config['admin_group'].present?
@@ -180,6 +194,10 @@ class OicSession < ActiveRecord::Base
       @user = JSON::parse(Base64::decode64(id_token.split('.')[1]))
     end
     return @user
+  end
+
+  def clean_old_oic_with_null_user
+    OicSession.where("user_id is null and updated_at < ?", 7.days.ago).delete_all
   end
 
   def authorization_url
@@ -253,8 +271,12 @@ class OicSession < ActiveRecord::Base
     self.access_token.present?
   end
 
+  def enable_global_logout?
+    client_config['disable_global_logout'].blank?
+  end
+
   def scopes
-    if client_config["scopes"].nil? 
+    if client_config["scopes"].blank?
       return "openid profile email user_name"
     else
       client_config["scopes"].split(',').each(&:strip).join(' ')

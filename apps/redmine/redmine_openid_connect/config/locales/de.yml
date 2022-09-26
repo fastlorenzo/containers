@@ -12,6 +12,8 @@ de:
     dynamic_config_expiry: "Intervall für Aktualisierung der OpenID-Einstellungen (Default: 1 day)"
     create_user_if_not_exists: "Benutzer erstellen, falls nicht vorhanden"
     disallowed_auth_sources_login: "Benutzer aus den folgenden Authentifizierungsquellen müssen sich mit SSO anmelden"
+    disable_ssl_validation: Deaktivieren Sie die SSL-Validierung
+    allowed_domains: Verfügbare Domänen
   oic_logout_success: 'Sie wurden ausgeloggt. <a href="%{value}">Klicken Sie hier, um sich erneut einzuloggen</a>.'
   oic_cannot_create_user: "Der Benutzer %{value} konnte nicht angelegt werden: "
   oic_try_another_account: "<a href='%{value}'>Mit einem anderen Account einloggen.</a>"

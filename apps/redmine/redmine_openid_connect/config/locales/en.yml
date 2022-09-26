@@ -13,6 +13,8 @@ en:
     dynamic_config_expiry: How often to retrieve openid configuration (default 1 day)
     create_user_if_not_exists: Create user if not exists
     disallowed_auth_sources_login: Users from the following auth sources will be required to login with SSO
+    disable_ssl_validation: Disable SSL Validation
+    allowed_domains: Available domains
   oic_logout_success: 'You have been logged out. <a href="%{value}">Click here to log in again</a>.'
   oic_cannot_create_user: "Could not create the user %{value}: "
   oic_try_another_account: "<a href='%{value}'>Try logging in with another account</a>"

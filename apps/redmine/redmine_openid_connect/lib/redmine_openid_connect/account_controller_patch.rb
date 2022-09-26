@@ -68,7 +68,7 @@ module RedmineOpenidConnect
           return redirect_to oic_local_logout
         end
 
-        oic_session.update!(authorize_params)
+        oic_session.update_attributes!(authorize_params)
 
         # verify id token nonce or reauthorize
         if oic_session.id_token.present?
@@ -82,17 +82,25 @@ module RedmineOpenidConnect
         oic_session.get_access_token!
         user_info = oic_session.get_user_info!
 
+        # check allowed domains
+        unless oic_session.allowed_domain_for?
+          return invalid_credentials
+        end
+
         # verify application authorization
         unless oic_session.authorized?
           return invalid_credentials
         end
 
         # Check if there's already an existing user
-        user = User.find_by_mail(user_info["email"])
+        user = User.find_by_login(oic_session.parse_email(user_info["email"])[:login])
+        if user.nil?
+          user = User.find_by_mail(user_info["email"])
+        end
 
         if user.nil?
           if !OicSession.create_user_if_not_exists?
-            flash.now[:warning] ||= l(:oic_cannot_create_user, value: user_info["email"])
+            flash.now[:warning] ||= l(:oic_cannot_create_user, user_info["email"])
             
             logger.warn "Could not create user #{user_info["email"]}, the system is not allowed to create new users through openid"
             flash.now[:warning] += "The system is not allowed to create new users through openid"
@@ -102,7 +110,8 @@ module RedmineOpenidConnect
 
           user = User.new
 
-          user.login = user_info["user_name"] || user_info["nickname"] || user_info["preferred_username"]
+          user.login = oic_session.parse_email(user_info["email"])[:login] || user_info["preferred_username"]
+          user.login ||= [user_info["given_name"], user_info["family_name"]]*"."
 
           firstname = user_info["given_name"]
           lastname = user_info["family_name"]
@@ -126,13 +135,13 @@ module RedmineOpenidConnect
           user.assign_attributes attributes
 
           if user.save
-            user.update_attribute(:admin, oic_session.admin?)
+            user.update_attribute(:admin, true) if oic_session.admin?
             oic_session.user_id = user.id
             oic_session.save!
             # after user creation just show "My Page" don't redirect to remember
             successful_authentication(user)
           else
-            flash.now[:warning] ||= l(:oic_cannot_create_user, value:user.login)
+            flash.now[:warning] ||= l(:oic_cannot_create_user, user.login)
             user.errors.full_messages.each do |error|
               logger.warn "Could not create user #{user.login}, error was #{error}"
               flash.now[:warning] += "#{error}. "
@@ -140,7 +149,7 @@ module RedmineOpenidConnect
             return invalid_credentials
           end
         else
-          user.update_attribute(:admin, oic_session.admin?)
+          user.update_attribute(:admin, true) if oic_session.admin?
           oic_session.user_id = user.id
           oic_session.save!
           # redirect back to initial URL

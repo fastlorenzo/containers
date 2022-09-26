@@ -1,0 +1,22 @@
+# English strings go here for Rails i18n
+ru:
+  config:
+    enabled: Включено
+    login_selector: Селектор входа
+    header: Настройка OpenID Connect
+    client_id: ID клиента
+    openid_connect_server_url: URL-адрес сервера OpenID
+    scopes: OpenID scopes (через запятую)
+    client_secret: Секретный ключ OpenID
+    group: Группа авторизации (пусто, если все пользователи авторизованы)
+    admin_group: Группа администраторов (члены этой группы рассматриваются как администраторы)
+    dynamic_config_expiry: Как часто извлекать конфигурацию openid (по умолчанию 1 день)
+    create_user_if_not_exists: Создать пользователя, если он не существует
+    disallowed_auth_sources_login: Пользователи из следующих источников должны входить с помощью SSO
+    disable_ssl_validation: Отключить проверку SSL
+    allowed_domains: Разрешенные домены
+  oic_logout_success: 'Вы вышли из системы. <a href="%{value}">Нажмите здесь, чтобы войти снова</a>.'
+  oic_cannot_create_user: "Не удалось создать пользователя %{value}: "
+  oic_try_another_account: "<a href='%{value}'>Попробуйте войти с другой учетной записью</a>"
+  oic_cannot_login_user: "Пользователь %{value} не смог войти: Пожалуйста, войдите, используя опцию SSO"
+  button_login_sso: Вход с помощью SSO

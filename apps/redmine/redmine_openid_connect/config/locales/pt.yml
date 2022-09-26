@@ -13,6 +13,8 @@ pt:
     dynamic_config_expiry: "Com que frequência obter configuração do openid (padrão 1 dia)"
     create_user_if_not_exists: "Criar utilizador caso não exista"
     disallowed_auth_sources_login: "Utilizadores das fontes selecionadas deverão fazer login SSO"
+    disable_ssl_validation: "Desativar validação SSL"
+    allowed_domains: "Domínios disponíveis"
   oic_logout_success: 'Saiu com sucesso. <a href="%{value}">Clique aqui para voltar a entrar</a>.'
   oic_cannot_create_user: "Não foi possível criar o utilizador %{value}: "
   oic_try_another_account: "<a href='%{value}'>Tente entrar com uma conta diferente</a>"
