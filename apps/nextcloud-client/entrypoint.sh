@@ -42,16 +42,16 @@ chown -R ncsync:ncsync /settings
 
 # check exclude file exists
 if [ -e "/settings/exclude" ]; then
-	NC_OPTIONS="$NC_OPTIONS --exclude /settings/exclude"
+    NC_OPTIONS="$NC_OPTIONS --exclude /settings/exclude"
 else
-	echo "INFO: exclude file not found!"
+    echo "INFO: exclude file not found!"
 fi
 
 # check unsyncedfolders file exists
 if [ -e "/settings/unsyncfolders" ]; then
-	NC_OPTIONS="$NC_OPTIONS --unsyncedfolders /settings/unsyncfolders"
+    NC_OPTIONS="$NC_OPTIONS --unsyncedfolders /settings/unsyncfolders"
 else
-	echo "INFO: unsync file not found!"
+    echo "INFO: unsync file not found!"
 fi
 
 # If $1 starts with tail, then set TEST_RUN variable to true
@@ -106,17 +106,23 @@ if [ -z "$NC_SOURCE_DIR" ]; then
     fi
 fi
 
-while true
-do
-	su-exec ncsync nextcloudcmd $NC_OPTIONS $NC_SOURCE_DIR $NC_URL
+# If TEST_RUN is true, run it and exit
+if [ "$TEST_RUN" = "true" ]; then
+    echo "INFO: Running test run"
+    exec "$@"
+    exit 0
+fi
 
-	# chown the files to the USER_UID if CHOWN_FILES is true
+while true; do
+    su-exec ncsync nextcloudcmd $NC_OPTIONS $NC_SOURCE_DIR $NC_URL
+
+    # chown the files to the USER_UID if CHOWN_FILES is true
     if [ "$CHOWN_FILES" = "true" ]; then
         echo "INFO: chowning files in $NC_SOURCE_DIR to $PUID:$PGID"
         chown -R ncsync:ncsync $NC_SOURCE_DIR
     fi
 
-	# Exit 0 if NC_EXIT is true
+    # Exit 0 if NC_EXIT is true
     if [ "$NC_EXIT" = "true" ]; then
         echo "INFO: NC_EXIT is true, exiting..."
         exit 0
