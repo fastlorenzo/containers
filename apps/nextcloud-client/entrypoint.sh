@@ -55,10 +55,11 @@ else
 fi
 
 # If $1 starts with tail, then set TEST_RUN variable to true
-if [ "${1#-}" != "$1" ]; then
-    TEST_RUN=false
-else
+if [ "${1:0:4}" == "tail" ]; then
+    echo "INFO: Test run, will not sync ($1)"
     TEST_RUN=true
+else
+    TEST_RUN=false
 fi
 
 # Check if NC_USER is set, if not, exit if TEST_RUN is false
