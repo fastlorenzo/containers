@@ -54,24 +54,38 @@ else
 	echo "INFO: unsync file not found!"
 fi
 
-# Check if NC_USER is set, if not, exit
+# If $1 starts with tail, then set TEST_RUN variable to true
+if [ "${1#-}" != "$1" ]; then
+    TEST_RUN=false
+else
+    TEST_RUN=true
+fi
+
+# Check if NC_USER is set, if not, exit if TEST_RUN is false
 if [ -z "$NC_USER" ]; then
     echo "ERROR: NC_USER is not set!"
-    exit 1
+    if [ "$TEST_RUN" = "false" ]; then
+        exit 1
+    fi
 else
-    NC_OPTIONS="$NC_OPTIONS --user $NC_USER"
+    NC_OPTIONS="$NC_OPTIONS -u $NC_USER"
 fi
+
 # Check if NC_PASS is set, if not, exit
 if [ -z "$NC_PASS" ]; then
     echo "ERROR: NC_PASS is not set!"
-    exit 1
+    if [ "$TEST_RUN" = "false" ]; then
+        exit 1
+    fi
 else
     NC_OPTIONS="$NC_OPTIONS --password $NC_PASS"
 fi
 # Check if NC_PATH is set, if not, exit
 if [ -z "$NC_PATH" ]; then
     echo "ERROR: NC_PATH is not set!"
-    exit 1
+    if [ "$TEST_RUN" = "false" ]; then
+        exit 1
+    fi
 else
     NC_OPTIONS="$NC_OPTIONS --path $NC_PATH"
 fi
@@ -79,13 +93,17 @@ fi
 # Check if NC_URL is set, if not, exit
 if [ -z "$NC_URL" ]; then
     echo "ERROR: NC_URL is not set!"
-    exit 1
+    if [ "$TEST_RUN" = "false" ]; then
+        exit 1
+    fi
 fi
 
 # Check if NC_SOURCE_DIR is set, if not, exit
 if [ -z "$NC_SOURCE_DIR" ]; then
     echo "ERROR: NC_SOURCE_DIR is not set!"
-    exit 1
+    if [ "$TEST_RUN" = "false" ]; then
+        exit 1
+    fi
 fi
 
 while true
