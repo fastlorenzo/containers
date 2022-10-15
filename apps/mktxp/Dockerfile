@@ -1,4 +1,4 @@
-FROM ghcr.io/onedr0p/alpine:rolling@sha256:35dc08b62b80ebd6d9a4e46ff1c4503967d4c0ca6a9ca8b04e299102b0319bf6
+FROM ghcr.io/fastlorenzo/alpine:rolling@sha256:4502ff33fba31b46e9e067b5dc635a899b2f73b0f2290ee6f8104b6a5f2b2a73
 
 ARG TARGETPLATFORM
 ARG BUILDPLATFORM
@@ -17,8 +17,7 @@ RUN chown -R root:root /usr/bin/mktxp \
     && ln -s /usr/bin/mktxp /app/mktxp \
     && rm -rf /tmp/*
 
-RUN addgroup -S mktxp && adduser -S mktxp -G mktxp
-USER mktxp
+USER kah
 
 EXPOSE 49090
 ENTRYPOINT ["/app/mktxp"]
