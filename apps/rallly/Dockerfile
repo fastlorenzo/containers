@@ -10,7 +10,7 @@ RUN apk add --no-cache git \
     && yarn build
 
 
-FROM ghcr.io/onedr0p/alpine:rolling@sha256:35dc08b62b80ebd6d9a4e46ff1c4503967d4c0ca6a9ca8b04e299102b0319bf6
+FROM ghcr.io/onedr0p/alpine:rolling@sha256:c3323a3704b6770d02d838e8ab6a1692f9a676a21e5f0dc6d34df32e4fce6d57
 COPY --from=builder /tmp/rallly .
 RUN apk add --no-cache yarn
 USER kah
