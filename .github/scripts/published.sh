@@ -9,7 +9,7 @@ if [[ -z "${STABLE}" || "${STABLE}" == false ]]; then
     APP="${APP}-${CHANNEL}"
 fi
 
-tags=$( \
+tags=$(
     curl -fsSL \
         -H "Accept: application/vnd.github.v3+json" \
         -H "Authorization: token ${TOKEN}" \
@@ -21,16 +21,16 @@ if [[ -z "${tags}" ]]; then
     exit 0
 fi
 
-current_tags=$( \
+current_tags=$(
     jq --compact-output \
         'map( select( .metadata.container.tags[] | contains("rolling") ) | .metadata.container.tags[] )' \
-            <<< "${tags}" \
+        <<<"${tags}"
 )
 
-tag=$( \
+tag=$(
     jq --compact-output \
         'map( select( index("rolling") | not ) )' \
-            <<< "${current_tags}"
+        <<<"${current_tags}"
 )
 
-printf "%s" "$(jq --raw-output '.[0]' <<< "${tag}")"
+printf "%s" "$(jq --raw-output '.[0]' <<<"${tag}")"
