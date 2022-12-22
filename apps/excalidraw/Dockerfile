@@ -9,7 +9,7 @@ RUN yarn --ignore-optional
 ENV NODE_ENV=production
 RUN yarn build:app:docker
 
-FROM nginxinc/nginx-unprivileged:1.23.2
+FROM nginxinc/nginx-unprivileged:1.23.3
 
 ARG VERSION
 ARG CHANNEL
