@@ -1,6 +1,6 @@
 FROM ghcr.io/onedr0p/par2cmdline-turbo:0.9.0 as par2cmdline-turbo
 
-FROM ghcr.io/onedr0p/alpine:rolling@sha256:e6a2407a15b7e557fb6617a592f672b004b6764887438502c047a567ec616e40
+FROM ghcr.io/fastlorenzo/alpine:rolling@sha256:3323fe30bf94508c9e0f9a659c1c2b7ecc7c0744d94bb3b408431a1bd0c10f4a
 ARG TARGETPLATFORM
 ARG VERSION
 ARG CHANNEL
@@ -18,7 +18,7 @@ ENV SABNZBD__PORT=8080
 # Download source
 RUN \
     curl -fsSL "https://github.com/sabnzbd/sabnzbd/releases/download/${VERSION}/SABnzbd-${VERSION}-src.tar.gz" \
-        | tar xzf - -C /app --strip-components=1 \
+    | tar xzf - -C /app --strip-components=1 \
     && \
     chown -R root:root /app \
     && chmod -R 755 /app \
@@ -29,27 +29,27 @@ RUN \
     # Keep py3-pip installed
     \
     apk add --no-cache \
-        ca-certificates \
-        python3 \
-        py3-pip \
-        p7zip \
+    ca-certificates \
+    python3 \
+    py3-pip \
+    p7zip \
     && \
     apk add --no-cache --virtual=.build-deps \
-        build-base \
-        libffi-dev \
-        openssl-dev \
-        musl-dev \
-        cargo \
-        python3-dev \
+    build-base \
+    libffi-dev \
+    openssl-dev \
+    musl-dev \
+    cargo \
+    python3-dev \
     && \
     pip install --upgrade pip \
     && \
     pip install --upgrade --requirement /app/requirements.txt \
     && apk del --purge .build-deps \
     && rm -rf \
-        /root/.cache \
-        /root/.cargo \
-        /tmp/*
+    /root/.cache \
+    /root/.cargo \
+    /tmp/*
 
 # Install par2cmdline-turbo
 COPY --from=par2cmdline-turbo /usr/local/bin/par2 /usr/local/bin/par2

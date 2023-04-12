@@ -1,4 +1,4 @@
-FROM ghcr.io/onedr0p/alpine:rolling@sha256:e6a2407a15b7e557fb6617a592f672b004b6764887438502c047a567ec616e40
+FROM ghcr.io/fastlorenzo/alpine:rolling@sha256:3323fe30bf94508c9e0f9a659c1c2b7ecc7c0744d94bb3b408431a1bd0c10f4a
 
 ARG TARGETPLATFORM
 ARG VERSION
@@ -15,15 +15,15 @@ RUN apk add --no-cache ca-certificates icu-libs libintl sqlite-libs xmlstarlet
 #hadolint ignore=DL3059
 RUN \
     case "${TARGETPLATFORM}" in \
-        'linux/amd64') export ARCH='x64' ;; \
-        'linux/arm64') export ARCH='arm64' ;; \
+    'linux/amd64') export ARCH='x64' ;; \
+    'linux/arm64') export ARCH='arm64' ;; \
     esac \
     && \
     curl -fsSL "https://readarr.servarr.com/v1/update/${READARR__BRANCH}/updatefile?version=${VERSION}&os=linuxmusl&runtime=netcore&arch=${ARCH}" \
-        | tar xzf - -C /app --strip-components=1 \
+    | tar xzf - -C /app --strip-components=1 \
     && \
     rm -rf \
-        /app/Readarr.Update \
+    /app/Readarr.Update \
     && \
     printf "UpdateMethod=docker\nBranch=%s\nPackageVersion=%s\nPackageAuthor=[onedr0p](https://github.com/onedr0p)\n" "${READARR__BRANCH}" "${VERSION}" > /app/package_info \
     && chown -R root:root /app \

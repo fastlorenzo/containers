@@ -1,4 +1,4 @@
-FROM ghcr.io/onedr0p/alpine:rolling@sha256:e6a2407a15b7e557fb6617a592f672b004b6764887438502c047a567ec616e40
+FROM ghcr.io/fastlorenzo/alpine:rolling@sha256:3323fe30bf94508c9e0f9a659c1c2b7ecc7c0744d94bb3b408431a1bd0c10f4a
 
 ARG TARGETPLATFORM
 ARG VERSION
@@ -14,19 +14,19 @@ RUN \
 
 RUN \
     case "${TARGETPLATFORM}" in \
-        'linux/amd64') export ARCH="x86_64" ;; \
-        'linux/arm64') export ARCH="aarch64" ;; \
+    'linux/amd64') export ARCH="x86_64" ;; \
+    'linux/arm64') export ARCH="aarch64" ;; \
     esac \
     && \
     case "${CHANNEL}" in \
-        'stable') \
-            export RELEASE=$(curl -sL "https://github.com/userdocs/qbittorrent-nox-static/releases/latest/download/dependency-version.json" | jq -r '. | "release-\(.qbittorrent)_v\(.libtorrent_1_2)"') \
-            && curl -fsSL -o /app/qbittorrent-nox "https://github.com/userdocs/qbittorrent-nox-static/releases/download/${RELEASE}/${ARCH}-qbittorrent-nox" \
-        ;; \
-        'beta') \
-            export RELEASE=$(curl -sL "https://github.com/userdocs/qbittorrent-nox-static/releases/latest/download/dependency-version.json" | jq -r '. | "release-\(.qbittorrent)_v\(.libtorrent_2_0)"') \
-            && curl -fsSL -o /app/qbittorrent-nox "https://github.com/userdocs/qbittorrent-nox-static/releases/download/${RELEASE}/${ARCH}-qbittorrent-nox" \
-        ;; \
+    'stable') \
+    export RELEASE=$(curl -sL "https://github.com/userdocs/qbittorrent-nox-static/releases/latest/download/dependency-version.json" | jq -r '. | "release-\(.qbittorrent)_v\(.libtorrent_1_2)"') \
+    && curl -fsSL -o /app/qbittorrent-nox "https://github.com/userdocs/qbittorrent-nox-static/releases/download/${RELEASE}/${ARCH}-qbittorrent-nox" \
+    ;; \
+    'beta') \
+    export RELEASE=$(curl -sL "https://github.com/userdocs/qbittorrent-nox-static/releases/latest/download/dependency-version.json" | jq -r '. | "release-\(.qbittorrent)_v\(.libtorrent_2_0)"') \
+    && curl -fsSL -o /app/qbittorrent-nox "https://github.com/userdocs/qbittorrent-nox-static/releases/download/${RELEASE}/${ARCH}-qbittorrent-nox" \
+    ;; \
     esac \
     && \
     chown -R root:root /app/qbittorrent-nox \

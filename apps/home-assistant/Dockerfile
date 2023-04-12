@@ -1,4 +1,4 @@
-FROM ghcr.io/onedr0p/alpine:rolling@sha256:e6a2407a15b7e557fb6617a592f672b004b6764887438502c047a567ec616e40
+FROM ghcr.io/fastlorenzo/alpine:rolling@sha256:3323fe30bf94508c9e0f9a659c1c2b7ecc7c0744d94bb3b408431a1bd0c10f4a
 
 # https://github.com/linuxserver/docker-homeassistant
 # https://github.com/home-assistant/docker
@@ -26,96 +26,96 @@ WORKDIR /tmp
 #hadolint ignore=DL3018
 RUN \
     apk add --no-cache \
-        bluez \
-        bluez-deprecated \
-        bluez-libs \
-        ca-certificates \
-        cups-libs \
-        eudev-libs \
-        ffmpeg \
-        git \
-        libcap \
-        libjpeg-turbo \
-        libstdc++ \
-        libxslt \
-        mariadb-connector-c \
-        mariadb-connector-c-dev \
-        openssh-client \
-        openssl \
-        postgresql-libs \
-        py3-pip \
-        python3 \
-        tiff
+    bluez \
+    bluez-deprecated \
+    bluez-libs \
+    ca-certificates \
+    cups-libs \
+    eudev-libs \
+    ffmpeg \
+    git \
+    libcap \
+    libjpeg-turbo \
+    libstdc++ \
+    libxslt \
+    mariadb-connector-c \
+    mariadb-connector-c-dev \
+    openssh-client \
+    openssl \
+    postgresql-libs \
+    py3-pip \
+    python3 \
+    tiff
 
 #hadolint ignore=DL3018,DL3013
 RUN \
     apk add --no-cache --virtual=.build-deps \
-        autoconf \
-        build-base \
-        cargo \
-        cmake \
-        cups-dev \
-        eudev-dev \
-        ffmpeg-dev \
-        glib-dev \
-        jpeg-dev \
-        libffi-dev \
-        libxml2-dev \
-        libxslt-dev \
-        postgresql-dev \
-        python3-dev \
-        unixodbc-dev \
+    autoconf \
+    build-base \
+    cargo \
+    cmake \
+    cups-dev \
+    eudev-dev \
+    ffmpeg-dev \
+    glib-dev \
+    jpeg-dev \
+    libffi-dev \
+    libxml2-dev \
+    libxslt-dev \
+    postgresql-dev \
+    python3-dev \
+    unixodbc-dev \
     && \
     pip install --upgrade \
-        cython \
-        pip \
-        setuptools \
-        wheel \
+    cython \
+    pip \
+    setuptools \
+    wheel \
     && \
     curl -fsSL "https://github.com/home-assistant/core/archive/${VERSION}.tar.gz" \
-        | tar xzf - -C /tmp --strip-components=1 \
+    | tar xzf - -C /tmp --strip-components=1 \
     && \
     mkdir -p /pip-packages \
     && \
     pip install \
-        --upgrade \
-        --target /pip-packages \
-        distlib \
+    --upgrade \
+    --target /pip-packages \
+    distlib \
     && \
     NUMPY_VERSION=$(grep "numpy" requirements_all.txt) \
     && \
     pip install ${PIPFLAGS} \
-        "${NUMPY_VERSION}" \
+    "${NUMPY_VERSION}" \
     && \
     case "${TARGETPLATFORM}" in \
-        'linux/amd64') \
-            export ARCH='amd64'; \
-        ;; \
-        'linux/arm64') \
-            export ARCH='aarch64'; \
-        ;; \
+    'linux/amd64') \
+    export ARCH='amd64'; \
+    ;; \
+    'linux/arm64') \
+    export ARCH='aarch64'; \
+    ;; \
     esac \
     && \
     HOME_ASSISTANT_BASE=$(curl -fsSL "https://raw.githubusercontent.com/home-assistant/core/${VERSION}/build.yaml" | grep "${ARCH}: " | cut -d ":" -f3) \
     && \
     pip install ${PIPFLAGS} \
-        --requirement "https://raw.githubusercontent.com/home-assistant/docker/${HOME_ASSISTANT_BASE}/requirements.txt" \
+    --requirement "https://raw.githubusercontent.com/home-assistant/docker/${HOME_ASSISTANT_BASE}/requirements.txt" \
     && \
     pip install ${PIPFLAGS} \
-        --requirement requirements_all.txt \
+    --requirement requirements_all.txt \
     && \
     pip install ${PIPFLAGS} \
-        homeassistant=="${VERSION}" \
+    homeassistant=="${VERSION}" \
     && \
     pip install ${PIPFLAGS} \
-        pycups PySwitchbot \
+    pycups PySwitchbot \
     && \
     apk del --purge .build-deps \
     && \
     rm -rf \
-        /root/.cache \
-        /root/.cargo \
-        /tmp/*
+    /root/.cache \
+    /root/.cargo \
+    /tmp/*
 
 WORKDIR /app
 USER kah

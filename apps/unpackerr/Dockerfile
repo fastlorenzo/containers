@@ -1,4 +1,4 @@
-FROM ghcr.io/onedr0p/alpine:rolling@sha256:e6a2407a15b7e557fb6617a592f672b004b6764887438502c047a567ec616e40
+FROM ghcr.io/fastlorenzo/alpine:rolling@sha256:3323fe30bf94508c9e0f9a659c1c2b7ecc7c0744d94bb3b408431a1bd0c10f4a
 
 ARG TARGETPLATFORM
 ARG VERSION
@@ -9,12 +9,12 @@ RUN apk add --no-cache ca-certificates
 #hadolint ignore=DL3059
 RUN \
     case "${TARGETPLATFORM}" in \
-        'linux/amd64') export ARCH='amd64' ;; \
-        'linux/arm64') export ARCH='arm64' ;; \
+    'linux/amd64') export ARCH='amd64' ;; \
+    'linux/arm64') export ARCH='arm64' ;; \
     esac \
     && \
     curl -fsSL "https://github.com/Unpackerr/unpackerr/releases/download/v${VERSION}/unpackerr.${ARCH}.linux.gz" \
-        -o /tmp/unpackerr.gz \
+    -o /tmp/unpackerr.gz \
     && gzip -dc < /tmp/unpackerr.gz > /app/unpackerr \
     && chown -R root:root /app \
     && chmod -R 755 /app \

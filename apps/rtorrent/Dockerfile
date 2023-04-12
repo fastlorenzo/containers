@@ -1,4 +1,4 @@
-FROM ghcr.io/onedr0p/alpine:rolling@sha256:e6a2407a15b7e557fb6617a592f672b004b6764887438502c047a567ec616e40
+FROM ghcr.io/fastlorenzo/alpine:rolling@sha256:3323fe30bf94508c9e0f9a659c1c2b7ecc7c0744d94bb3b408431a1bd0c10f4a
 
 ARG TARGETPLATFORM
 ARG VERSION
@@ -15,7 +15,7 @@ ENV RTORRENT__DEFAULT_CONFIG="true" \
 RUN apk add --no-cache ca-certificates
 #hadolint ignore=DL3059
 RUN curl -fsSL -o /app/rtorrent \
-        "https://github.com/jesec/rtorrent/releases/download/v${VERSION}/rtorrent-linux-${TARGETARCH}" \
+    "https://github.com/jesec/rtorrent/releases/download/v${VERSION}/rtorrent-linux-${TARGETARCH}" \
     && chown -R root:root /app \
     && chmod -R 755 /app \
     && mkdir -p "$(dirname "${RTORRENT__SOCKET}")" \

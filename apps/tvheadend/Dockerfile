@@ -1,4 +1,4 @@
-FROM ghcr.io/onedr0p/alpine:rolling@sha256:e6a2407a15b7e557fb6617a592f672b004b6764887438502c047a567ec616e40 as builder
+FROM ghcr.io/fastlorenzo/alpine:rolling@sha256:3323fe30bf94508c9e0f9a659c1c2b7ecc7c0744d94bb3b408431a1bd0c10f4a as builder
 
 ARG TARGETPLATFORM
 ARG VERSION
@@ -12,105 +12,105 @@ COPY ./apps/tvheadend/patches/ /tmp/patches/
 
 RUN \
     case "${TARGETPLATFORM}" in \
-        'linux/amd64') export EXTRA_PACKAGES='libva-dev' ;; \
-        'linux/arm64') export EXTRA_PACKAGES='' ;; \
+    'linux/amd64') export EXTRA_PACKAGES='libva-dev' ;; \
+    'linux/arm64') export EXTRA_PACKAGES='' ;; \
     esac \
     && \
     apk add --no-cache \
-        ${EXTRA_PACKAGES} \
-        autoconf \
-        automake \
-        bsd-compat-headers \
-        bzip2 \
-        cmake \
-        coreutils \
-        curl \
-        ffmpeg4-dev \
-        file \
-        findutils \
-        g++ \
-        gcc \
-        gettext-dev \
-        git \
-        gnu-libiconv-dev \
-        gzip \
-        jq \
-        libcurl \
-        libdvbcsa-dev \
-        libgcrypt-dev \
-        libhdhomerun-dev \
-        libtool \
-        libvpx-dev \
-        libxml2-dev \
-        libxslt-dev \
-        linux-headers \
-        make \
-        openssl-dev \
-        opus-dev \
-        patch \
-        pcre2-dev \
-        perl-archive-zip \
-        perl-boolean \
-        perl-capture-tiny \
-        perl-cgi \
-        perl-compress-raw-zlib \
-        perl-date-manip \
-        perl-datetime \
-        perl-datetime-format-strptime \
-        perl-datetime-timezone \
-        perl-dbd-sqlite \
-        perl-dbi \
-        perl-dev \
-        perl-digest-sha1 \
-        perl-doc \
-        perl-file-slurp \
-        perl-file-temp \
-        perl-file-which \
-        perl-getopt-long \
-        perl-html-parser \
-        perl-html-tree \
-        perl-http-cookies \
-        perl-io \
-        perl-io-html \
-        perl-io-socket-ssl \
-        perl-io-stringy \
-        perl-json \
-        perl-json-xs \
-        perl-libwww \
-        perl-lingua-en-numbers-ordinate \
-        perl-lingua-preferred \
-        perl-list-moreutils \
-        perl-lwp-useragent-determined \
-        perl-module-build \
-        perl-module-pluggable \
-        perl-net-ssleay \
-        perl-parse-recdescent \
-        perl-path-class \
-        perl-scalar-list-utils \
-        perl-term-progressbar \
-        perl-term-readkey \
-        perl-test-exception \
-        perl-test-requires \
-        perl-timedate \
-        perl-try-tiny \
-        perl-unicode-string \
-        perl-xml-libxml \
-        perl-xml-libxslt \
-        perl-xml-parser \
-        perl-xml-sax \
-        perl-xml-treepp \
-        perl-xml-twig \
-        perl-xml-writer \
-        pkgconf \
-        pngquant \
-        python3 \
-        sdl12-compat-dev \
-        tar \
-        uriparser-dev \
-        wget \
-        x264-dev \
-        x265-dev \
-        zlib-dev
+    ${EXTRA_PACKAGES} \
+    autoconf \
+    automake \
+    bsd-compat-headers \
+    bzip2 \
+    cmake \
+    coreutils \
+    curl \
+    ffmpeg4-dev \
+    file \
+    findutils \
+    g++ \
+    gcc \
+    gettext-dev \
+    git \
+    gnu-libiconv-dev \
+    gzip \
+    jq \
+    libcurl \
+    libdvbcsa-dev \
+    libgcrypt-dev \
+    libhdhomerun-dev \
+    libtool \
+    libvpx-dev \
+    libxml2-dev \
+    libxslt-dev \
+    linux-headers \
+    make \
+    openssl-dev \
+    opus-dev \
+    patch \
+    pcre2-dev \
+    perl-archive-zip \
+    perl-boolean \
+    perl-capture-tiny \
+    perl-cgi \
+    perl-compress-raw-zlib \
+    perl-date-manip \
+    perl-datetime \
+    perl-datetime-format-strptime \
+    perl-datetime-timezone \
+    perl-dbd-sqlite \
+    perl-dbi \
+    perl-dev \
+    perl-digest-sha1 \
+    perl-doc \
+    perl-file-slurp \
+    perl-file-temp \
+    perl-file-which \
+    perl-getopt-long \
+    perl-html-parser \
+    perl-html-tree \
+    perl-http-cookies \
+    perl-io \
+    perl-io-html \
+    perl-io-socket-ssl \
+    perl-io-stringy \
+    perl-json \
+    perl-json-xs \
+    perl-libwww \
+    perl-lingua-en-numbers-ordinate \
+    perl-lingua-preferred \
+    perl-list-moreutils \
+    perl-lwp-useragent-determined \
+    perl-module-build \
+    perl-module-pluggable \
+    perl-net-ssleay \
+    perl-parse-recdescent \
+    perl-path-class \
+    perl-scalar-list-utils \
+    perl-term-progressbar \
+    perl-term-readkey \
+    perl-test-exception \
+    perl-test-requires \
+    perl-timedate \
+    perl-try-tiny \
+    perl-unicode-string \
+    perl-xml-libxml \
+    perl-xml-libxslt \
+    perl-xml-parser \
+    perl-xml-sax \
+    perl-xml-treepp \
+    perl-xml-twig \
+    perl-xml-writer \
+    pkgconf \
+    pngquant \
+    python3 \
+    sdl12-compat-dev \
+    tar \
+    uriparser-dev \
+    wget \
+    x264-dev \
+    x265-dev \
+    zlib-dev
 
 RUN \
     rm -rf /usr/include/iconv.h \
@@ -138,51 +138,51 @@ RUN \
 WORKDIR /tmp/tvheadend
 RUN \
     case "${TARGETPLATFORM}" in \
-        'linux/amd64') export EXTRA_OPTS='--enable-vaapi' ;; \
-        'linux/arm64') export EXTRA_OPTS='' ;; \
+    'linux/amd64') export EXTRA_OPTS='--enable-vaapi' ;; \
+    'linux/arm64') export EXTRA_OPTS='' ;; \
     esac \
     && \
     git clone https://github.com/tvheadend/tvheadend.git . \
     && \
     if [ -n "${VERSION}" ]; then \
-        NUMBER_COMMITS_TO_REVERT=$(( $(git rev-list --count --first-parent HEAD) - $(echo "${VERSION}" | cut -d "." -f3) )); \
-        git checkout "master~${NUMBER_COMMITS_TO_REVERT}"; \
+    NUMBER_COMMITS_TO_REVERT=$(( $(git rev-list --count --first-parent HEAD) - $(echo "${VERSION}" | cut -d "." -f3) )); \
+    git checkout "master~${NUMBER_COMMITS_TO_REVERT}"; \
     fi \
     && \
     ./configure \
-        `#Encoding` \
-        --disable-ffmpeg_static \
-        --disable-libfdkaac_static \
-        --disable-libtheora_static \
-        --disable-libopus_static \
-        --disable-libvorbis_static \
-        --disable-libvpx_static \
-        --disable-libx264_static \
-        --disable-libx265_static \
-        --disable-libfdkaac \
-        --enable-libopus \
-        --enable-libvorbis \
-        --enable-libvpx \
-        --enable-libx264 \
-        --enable-libx265 \
-        \
-        `#Options` \
-        --disable-avahi \
-        --disable-dbus_1 \
-        --disable-bintray_cache \
-        --disable-execinfo \
-        --disable-hdhomerun_static \
-        --enable-hdhomerun_client \
-        --enable-libav \
-        --enable-pngquant \
-        --enable-trace \
-        ${EXTRA_OPTS} \
-        --infodir=/usr/share/info \
-        --localstatedir=/var \
-        --mandir=/usr/share/man \
-        --prefix=/usr \
-        --python=python3 \
-        --sysconfdir=/config \
+    `#Encoding` \
+    --disable-ffmpeg_static \
+    --disable-libfdkaac_static \
+    --disable-libtheora_static \
+    --disable-libopus_static \
+    --disable-libvorbis_static \
+    --disable-libvpx_static \
+    --disable-libx264_static \
+    --disable-libx265_static \
+    --disable-libfdkaac \
+    --enable-libopus \
+    --enable-libvorbis \
+    --enable-libvpx \
+    --enable-libx264 \
+    --enable-libx265 \
+    \
+    `#Options` \
+    --disable-avahi \
+    --disable-dbus_1 \
+    --disable-bintray_cache \
+    --disable-execinfo \
+    --disable-hdhomerun_static \
+    --enable-hdhomerun_client \
+    --enable-libav \
+    --enable-pngquant \
+    --enable-trace \
+    ${EXTRA_OPTS} \
+    --infodir=/usr/share/info \
+    --localstatedir=/var \
+    --mandir=/usr/share/man \
+    --prefix=/usr \
+    --python=python3 \
+    --sysconfdir=/config \
     && make -j $(nproc) \
     && make DESTDIR=/tmp/tvheadend-build install
 
@@ -191,7 +191,7 @@ RUN \
     ARGTABLE_VER1="${ARGTABLE_VER//./-}" \
     && \
     curl -fsSL "https://sourceforge.net/projects/argtable/files/argtable/argtable-${ARGTABLE_VER}/argtable${ARGTABLE_VER1}.tar.gz" \
-        | tar xzf - -C . --strip-components=1 \
+    | tar xzf - -C . --strip-components=1 \
     && cp /tmp/patches/config.* . \
     && ./configure --prefix=/usr \
     && make -j $(nproc) \
@@ -207,7 +207,7 @@ RUN \
     && make -j $(nproc) \
     && make DESTDIR=/tmp/comskip-build install
 
-FROM ghcr.io/onedr0p/alpine:rolling@sha256:e6a2407a15b7e557fb6617a592f672b004b6764887438502c047a567ec616e40
+FROM ghcr.io/fastlorenzo/alpine:rolling@sha256:3323fe30bf94508c9e0f9a659c1c2b7ecc7c0744d94bb3b408431a1bd0c10f4a
 
 ARG TARGETPLATFORM
 ARG VERSION
@@ -217,96 +217,96 @@ ENV HOME="/config"
 
 RUN \
     case "${TARGETPLATFORM}" in \
-        'linux/amd64') export EXTRA_PACKAGES='libva libva-intel-driver intel-media-driver' ;; \
-        'linux/arm64') export EXTRA_PACKAGES='' ;; \
+    'linux/amd64') export EXTRA_PACKAGES='libva libva-intel-driver intel-media-driver' ;; \
+    'linux/arm64') export EXTRA_PACKAGES='' ;; \
     esac \
     && \
     apk add --no-cache \
-        ${EXTRA_PACKAGES} \
-        bsd-compat-headers \
-        bzip2 \
-        curl \
-        ffmpeg4 \
-        ffmpeg4-libs \
-        gnu-libiconv \
-        gzip \
-        libcrypto1.1 \
-        libcurl \
-        libdvbcsa \
-        libhdhomerun-libs \
-        libssl1.1 \
-        libvpx \
-        libxml2 \
-        libxslt \
-        linux-headers \
-        openssl \
-        opus \
-        pcre2 \
-        perl \
-        perl-archive-zip \
-        perl-boolean \
-        perl-capture-tiny \
-        perl-cgi \
-        perl-compress-raw-zlib \
-        perl-date-manip \
-        perl-datetime \
-        perl-datetime-format-strptime \
-        perl-datetime-timezone \
-        perl-dbd-sqlite \
-        perl-dbi \
-        perl-digest-sha1 \
-        perl-doc \
-        perl-file-slurp \
-        perl-file-temp \
-        perl-file-which \
-        perl-getopt-long \
-        perl-html-parser \
-        perl-html-tree \
-        perl-http-cookies \
-        perl-io \
-        perl-io-html \
-        perl-io-socket-ssl \
-        perl-io-stringy \
-        perl-json \
-        perl-json-xs \
-        perl-libwww \
-        perl-lingua-en-numbers-ordinate \
-        perl-lingua-preferred \
-        perl-list-moreutils \
-        perl-lwp-useragent-determined \
-        perl-module-build \
-        perl-module-pluggable \
-        perl-net-ssleay \
-        perl-parse-recdescent \
-        perl-path-class \
-        perl-scalar-list-utils \
-        perl-term-progressbar \
-        perl-term-readkey \
-        perl-test-exception \
-        perl-test-requires \
-        perl-timedate \
-        perl-try-tiny \
-        perl-unicode-string \
-        perl-xml-libxml \
-        perl-xml-libxslt \
-        perl-xml-parser \
-        perl-xml-sax \
-        perl-xml-treepp \
-        perl-xml-twig \
-        perl-xml-writer \
-        py3-requests \
-        python3 \
-        tar \
-        uriparser \
-        wget \
-        x264 \
-        x265 \
-        zlib
+    ${EXTRA_PACKAGES} \
+    bsd-compat-headers \
+    bzip2 \
+    curl \
+    ffmpeg4 \
+    ffmpeg4-libs \
+    gnu-libiconv \
+    gzip \
+    libcrypto1.1 \
+    libcurl \
+    libdvbcsa \
+    libhdhomerun-libs \
+    libssl1.1 \
+    libvpx \
+    libxml2 \
+    libxslt \
+    linux-headers \
+    openssl \
+    opus \
+    pcre2 \
+    perl \
+    perl-archive-zip \
+    perl-boolean \
+    perl-capture-tiny \
+    perl-cgi \
+    perl-compress-raw-zlib \
+    perl-date-manip \
+    perl-datetime \
+    perl-datetime-format-strptime \
+    perl-datetime-timezone \
+    perl-dbd-sqlite \
+    perl-dbi \
+    perl-digest-sha1 \
+    perl-doc \
+    perl-file-slurp \
+    perl-file-temp \
+    perl-file-which \
+    perl-getopt-long \
+    perl-html-parser \
+    perl-html-tree \
+    perl-http-cookies \
+    perl-io \
+    perl-io-html \
+    perl-io-socket-ssl \
+    perl-io-stringy \
+    perl-json \
+    perl-json-xs \
+    perl-libwww \
+    perl-lingua-en-numbers-ordinate \
+    perl-lingua-preferred \
+    perl-list-moreutils \
+    perl-lwp-useragent-determined \
+    perl-module-build \
+    perl-module-pluggable \
+    perl-net-ssleay \
+    perl-parse-recdescent \
+    perl-path-class \
+    perl-scalar-list-utils \
+    perl-term-progressbar \
+    perl-term-readkey \
+    perl-test-exception \
+    perl-test-requires \
+    perl-timedate \
+    perl-try-tiny \
+    perl-unicode-string \
+    perl-xml-libxml \
+    perl-xml-libxslt \
+    perl-xml-parser \
+    perl-xml-sax \
+    perl-xml-treepp \
+    perl-xml-twig \
+    perl-xml-writer \
+    py3-requests \
+    python3 \
+    tar \
+    uriparser \
+    wget \
+    x264 \
+    x265 \
+    zlib
 
 RUN \
     mkdir -p /app/picons \
     && curl -fsSL "https://lsio-ci.ams3.digitaloceanspaces.com/picons/picons.tar.bz2" \
-        | tar xjf - -C /app/picons \
+    | tar xjf - -C /app/picons \
     && \
     chown -R root:root /app \
     && chmod -R 755 /app \
