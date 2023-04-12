@@ -1,7 +1,6 @@
-FROM ghcr.io/onedr0p/alpine:rolling@sha256:c3323a3704b6770d02d838e8ab6a1692f9a676a21e5f0dc6d34df32e4fce6d57 as builder
+FROM ghcr.io/onedr0p/alpine:rolling@sha256:e6a2407a15b7e557fb6617a592f672b004b6764887438502c047a567ec616e40 as builder
 
 ARG TARGETPLATFORM
-ARG BUILDPLATFORM
 ARG VERSION
 ARG CHANNEL
 
@@ -208,10 +207,9 @@ RUN \
     && make -j $(nproc) \
     && make DESTDIR=/tmp/comskip-build install
 
-FROM ghcr.io/onedr0p/alpine:rolling@sha256:c3323a3704b6770d02d838e8ab6a1692f9a676a21e5f0dc6d34df32e4fce6d57
+FROM ghcr.io/onedr0p/alpine:rolling@sha256:e6a2407a15b7e557fb6617a592f672b004b6764887438502c047a567ec616e40
 
 ARG TARGETPLATFORM
-ARG BUILDPLATFORM
 ARG VERSION
 ARG CHANNEL
 
@@ -219,7 +217,7 @@ ENV HOME="/config"
 
 RUN \
     case "${TARGETPLATFORM}" in \
-        'linux/amd64') export EXTRA_PACKAGES='libva libva-intel-driver intel-media-driver mesa-dri-ati' ;; \
+        'linux/amd64') export EXTRA_PACKAGES='libva libva-intel-driver intel-media-driver' ;; \
         'linux/arm64') export EXTRA_PACKAGES='' ;; \
     esac \
     && \

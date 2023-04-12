@@ -1,7 +1,6 @@
-FROM ghcr.io/onedr0p/alpine:rolling@sha256:c3323a3704b6770d02d838e8ab6a1692f9a676a21e5f0dc6d34df32e4fce6d57
+FROM ghcr.io/onedr0p/alpine:rolling@sha256:e6a2407a15b7e557fb6617a592f672b004b6764887438502c047a567ec616e40
 
 ARG TARGETPLATFORM
-ARG BUILDPLATFORM
 ARG VERSION
 ARG CHANNEL
 ARG TARGETARCH
@@ -11,8 +10,6 @@ ENV RTORRENT__DEFAULT_CONFIG="true" \
     RTORRENT__CONFIG_FILE="/config/rtorrent.rc" \
     RTORRENT__SOCKET="/sock/rtorrent.sock" \
     RTORRENT__BT_PORT="50415"
-
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 #hadolint ignore=DL3018
 RUN apk add --no-cache ca-certificates

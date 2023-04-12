@@ -1,7 +1,6 @@
-FROM ghcr.io/onedr0p/alpine:rolling@sha256:c3323a3704b6770d02d838e8ab6a1692f9a676a21e5f0dc6d34df32e4fce6d57
+FROM ghcr.io/onedr0p/alpine:rolling@sha256:e6a2407a15b7e557fb6617a592f672b004b6764887438502c047a567ec616e40
 
 ARG TARGETPLATFORM
-ARG BUILDPLATFORM
 ARG VERSION
 ARG CHANNEL
 
@@ -11,16 +10,16 @@ ENV HOME=/config \
     TRANSMISSION__RPC_PORT=9091 \
     TRANSMISSION_WEB_HOME=/app/web
 
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-
 #hadolint ignore=DL3018
-RUN apk add --no-cache ca-certificates geoip p7zip python3 transmission-cli~"${VERSION}" transmission-daemon~"${VERSION}"
+RUN apk add --no-cache ca-certificates geoip p7zip python3 \
+    && apk add --no-cache --repository http://dl-cdn.alpinelinux.org/alpine/edge/community transmission-cli~"${VERSION}" transmission-daemon~"${VERSION}"
+
 #hadolint ignore=DL3059
 RUN chown -R root:root /usr/bin/transmission* \
     && chmod -R 755 /usr/bin/transmission* \
     && ln -s /usr/bin/transmission-cli /app/transmission-cli \
     && ln -s /usr/bin/transmission-daemon /app/transmission-daemon \
-    && ln -s /usr/share/transmission/web /app/web \
+    && ln -s /usr/share/transmission/public_html /app/web \
     && rm -rf /tmp/*
 
 USER kah

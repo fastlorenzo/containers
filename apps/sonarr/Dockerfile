@@ -1,7 +1,6 @@
-FROM ghcr.io/onedr0p/ubuntu:rolling@sha256:f9cf9b85251fded70455eed9aa09e91fa7e73890f7c59abcc889256e51531ce1
+FROM ghcr.io/onedr0p/ubuntu:jammy-20221101@sha256:bf2d52a2e698ab9c2e0a1af7f7b70b9806091c5ca21d9f1a4d1c3809f41e5e93
 
 ARG TARGETPLATFORM
-ARG BUILDPLATFORM
 ARG VERSION
 ARG CHANNEL
 
@@ -10,8 +9,6 @@ ENV \
     SONARR__BRANCH="${CHANNEL}" \
     SONARR__PORT="8989" \
     SONARR__ANALYTICS_ENABLED="False"
-
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # hadolint ignore=DL3008,DL3015,SC2086
 RUN \
@@ -32,7 +29,7 @@ RUN \
     curl -fsSL "https://download.sonarr.tv/v3/${SONARR__BRANCH}/${VERSION}/Sonarr.${SONARR__BRANCH}.${VERSION}.linux.tar.gz" \
         | tar xzf - -C /app --strip-components=1 \
     && \
-    printf "UpdateMethod=docker\nBranch=%s\nPackageVersion=%s\nPackageAuthor=[Team k8s-at-home](https://github.com/k8s-at-home)" "${SONARR__BRANCH}" "${VERSION}" > /app/package_info \
+    printf "UpdateMethod=docker\nBranch=%s\nPackageVersion=%s\nPackageAuthor=[onedr0p](https://github.com/onedr0p)\n" "${SONARR__BRANCH}" "${VERSION}" > /app/package_info \
     && \
     gpgconf --kill all \
     && apt-get remove -y gnupg \
@@ -47,7 +44,7 @@ RUN \
         /var/tmp/ \
     && chown -R root:root /app \
     && chmod -R 755 /app \
-    && printf "umask %d" "${UMASK}" >> /etc/bash.bashrc
+    && printf "umask %d\n" "${UMASK}" >> /etc/bash.bashrc
 
 USER kah
 

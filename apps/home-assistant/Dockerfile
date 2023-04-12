@@ -1,4 +1,4 @@
-FROM ghcr.io/onedr0p/alpine:rolling@sha256:c3323a3704b6770d02d838e8ab6a1692f9a676a21e5f0dc6d34df32e4fce6d57
+FROM ghcr.io/onedr0p/alpine:rolling@sha256:e6a2407a15b7e557fb6617a592f672b004b6764887438502c047a567ec616e40
 
 # https://github.com/linuxserver/docker-homeassistant
 # https://github.com/home-assistant/docker
@@ -6,7 +6,6 @@ FROM ghcr.io/onedr0p/alpine:rolling@sha256:c3323a3704b6770d02d838e8ab6a1692f9a67
 # https://github.com/pypa/pip/issues/10788
 
 ARG TARGETPLATFORM
-ARG BUILDPLATFORM
 ARG VERSION
 ARG CHANNEL
 
@@ -21,8 +20,6 @@ ENV \
     HOME="/config"
 
 ENV HOME_ASSISTANT__HACS_INSTALL="false"
-
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 WORKDIR /tmp
 

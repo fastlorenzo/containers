@@ -1,7 +1,6 @@
-FROM ghcr.io/onedr0p/alpine:rolling@sha256:c3323a3704b6770d02d838e8ab6a1692f9a676a21e5f0dc6d34df32e4fce6d57
+FROM ghcr.io/onedr0p/alpine:rolling@sha256:e6a2407a15b7e557fb6617a592f672b004b6764887438502c047a567ec616e40
 
 ARG TARGETPLATFORM
-ARG BUILDPLATFORM
 ARG VERSION
 ARG CHANNEL
 
@@ -10,8 +9,6 @@ ENV \
     LIDARR__BRANCH="${CHANNEL}" \
     LIDARR__PORT="8686" \
     LIDARR__ANALYTICS_ENABLED="False"
-
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 #hadolint ignore=DL3018
 RUN apk add --no-cache ca-certificates chromaprint icu-libs libintl sqlite-libs xmlstarlet
@@ -29,7 +26,7 @@ RUN \
         /app/Lidarr.Update \
         /app/fpcalc \
     && \
-    printf "UpdateMethod=docker\nBranch=%s\nPackageVersion=%s\nPackageAuthor=[Team k8s-at-home](https://github.com/k8s-at-home)" "${LIDARR__BRANCH}" "${VERSION}" > /app/package_info \
+    printf "UpdateMethod=docker\nBranch=%s\nPackageVersion=%s\nPackageAuthor=[onedr0p](https://github.com/onedr0p)\n" "${LIDARR__BRANCH}" "${VERSION}" > /app/package_info \
     && chown -R root:root /app \
     && chmod -R 755 /app \
     && rm -rf /tmp/*
