@@ -20,7 +20,7 @@ RUN chown -R root:root /usr/bin/mktxp \
 USER kah
 
 EXPOSE 49090
-ENTRYPOINT ["/app/mktxp"]
-CMD ["export"]
+COPY ./apps/mktxp/entrypoint.sh /entrypoint.sh
+CMD ["/entrypoint.sh"]
 
 LABEL org.opencontainers.image.source="https://github.com/akpw/mktxp"
