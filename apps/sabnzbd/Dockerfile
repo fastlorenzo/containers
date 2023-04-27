@@ -1,6 +1,6 @@
 FROM ghcr.io/onedr0p/par2cmdline-turbo:0.9.0 as par2cmdline-turbo
 
-FROM ghcr.io/fastlorenzo/alpine:rolling@sha256:3323fe30bf94508c9e0f9a659c1c2b7ecc7c0744d94bb3b408431a1bd0c10f4a
+FROM ghcr.io/fastlorenzo/alpine:rolling@sha256:87a48989ad101482b19476d9a3994504b751900a8ec74af995680fbaaa062490
 ARG TARGETPLATFORM
 ARG VERSION
 ARG CHANNEL
