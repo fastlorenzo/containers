@@ -7,7 +7,10 @@ SHELL ["/bin/bash", "-xo", "pipefail", "-c"]
 ENV LANG C.UTF-8
 
 # Use backports to avoid install some libs with pip
-RUN echo 'deb http://deb.debian.org/debian stretch-backports main' > /etc/apt/sources.list.d/backports.list
+RUN echo 'deb http://archive.debian.org/debian stretch-backports main' > /etc/apt/sources.list.d/backports.list && \
+    sed -i 's/deb.debian.org/archive.debian.org/g' /etc/apt/sources.list && \
+    sed -i 's/security.debian.org/archive.debian.org/g' /etc/apt/sources.list && \
+    sed -i 's/.*stretch-updates.*//g' /etc/apt/sources.list
 
 # Install some deps, lessc and less-plugin-clean-css, and wkhtmltopdf
 RUN apt-get update \
@@ -33,7 +36,6 @@ RUN apt-get update \
     python3-xlwt \
     python3-pypdf2 \
     python3-psycopg2 \
-    python3-webdav \
     xz-utils \
     && case $(dpkg --print-architecture) in \
     amd64) wkhtml_deb="wkhtmltox_0.12.5-1.stretch_amd64.deb" ;; \
@@ -43,18 +45,19 @@ RUN apt-get update \
     && curl -o wkhtmltox.deb -sSL https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.5/${wkhtml_deb} \
     # && echo '7e35a63f9db14f93ec7feeb0fce76b30c08f2057 wkhtmltox.deb' | sha1sum -c - \
     && apt-get install -y --no-install-recommends ./wkhtmltox.deb \
+    && pip3 install pywebdav \
     && rm -rf /var/lib/apt/lists/* wkhtmltox.deb
 
 # install latest postgresql-client
 RUN for i in {1..8}; do mkdir -p "/usr/share/man/man$i"; done \
-    && echo 'deb http://apt.postgresql.org/pub/repos/apt/ stretch-pgdg main' > /etc/apt/sources.list.d/pgdg.list \
-    && GNUPGHOME="$(mktemp -d)" \
-    && export GNUPGHOME \
-    && repokey='B97B0AFCAA1A47F044F244A07FCC7D46ACCC4CF8' \
-    && gpg --batch --keyserver keyserver.ubuntu.com --recv-keys "${repokey}" \
-    && gpg --batch --armor --export "${repokey}" > /etc/apt/trusted.gpg.d/pgdg.gpg.asc \
-    && gpgconf --kill all \
-    && rm -rf "$GNUPGHOME" \
+    # && echo 'deb http://apt.postgresql.org/pub/repos/apt/ buster-pgdg main' > /etc/apt/sources.list.d/pgdg.list \
+    # && GNUPGHOME="$(mktemp -d)" \
+    # && export GNUPGHOME \
+    # && repokey='B97B0AFCAA1A47F044F244A07FCC7D46ACCC4CF8' \
+    # && gpg --batch --keyserver keyserver.ubuntu.com --recv-keys "${repokey}" \
+    # && gpg --batch --armor --export "${repokey}" > /etc/apt/trusted.gpg.d/pgdg.gpg.asc \
+    # && gpgconf --kill all \
+    # && rm -rf "$GNUPGHOME" \
     && apt-get update  \
     && apt-get install --no-install-recommends -y postgresql-client \
     && rm -f /etc/apt/sources.list.d/pgdg.list \
@@ -65,8 +68,8 @@ RUN for i in {1..8}; do mkdir -p "/usr/share/man/man$i"; done \
 #         && apt-get -y install --no-install-recommends postgresql-client \
 #         && rm -rf /var/lib/apt/lists/*
 
-RUN curl -o python-pypdf.deb -sSL http://ftp.de.debian.org/debian/pool/main/p/python-pypdf/python-pypdf_1.13-2_all.deb \
-    && curl -o python-support.deb -sSL http://ftp.de.debian.org/debian/pool/main/p/python-support/python-support_1.0.15_all.deb \
+RUN curl -o python-pypdf.deb -sSL http://archive.debian.org/debian/pool/main/p/python-pypdf/python-pypdf_1.13-2_all.deb\
+    && curl -o python-support.deb -sSL http://archive.debian.org/debian/pool/main/p/python-support/python-support_1.0.15_all.deb \
     && apt-get update \
     && apt-get -y install --no-install-recommends ./python-support.deb \
     && apt-get -y install --no-install-recommends python \
@@ -80,7 +83,7 @@ ARG ODOO_SHA=c41c6eaf93015234b4b62125436856a482720c3d
 RUN curl -o odoo.deb -sSL http://nightly.odoo.com/${ODOO_VERSION}/nightly/deb/odoo_${ODOO_VERSION}.${ODOO_RELEASE}_all.deb \
     && echo "${ODOO_SHA} odoo.deb" | sha1sum -c - \
     && apt-get update \
-    && apt-get -y install --no-install-recommends ./odoo.deb\
+    && apt-get -y install --no-install-recommends ./odoo.deb \
     && rm -rf /var/lib/apt/lists/* odoo.deb
 
 # Copy entrypoint script and Odoo configuration file
