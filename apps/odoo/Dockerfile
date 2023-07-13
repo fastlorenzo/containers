@@ -33,6 +33,7 @@ RUN apt-get update \
     python3-xlwt \
     python3-pypdf2 \
     python3-psycopg2 \
+    python3-webdav \
     xz-utils \
     && case $(dpkg --print-architecture) in \
     amd64) wkhtml_deb="wkhtmltox_0.12.5-1.stretch_amd64.deb" ;; \
