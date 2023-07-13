@@ -50,6 +50,8 @@ RUN apt-get update \
 
 # install latest postgresql-client
 RUN for i in {1..8}; do mkdir -p "/usr/share/man/man$i"; done \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends apt-transport-https ca-certificates \
     && echo 'deb http://apt-archive.postgresql.org/pub/repos/apt/ stretch-pgdg-archive main' > /etc/apt/sources.list.d/pgdg.list \
     && GNUPGHOME="$(mktemp -d)" \
     && export GNUPGHOME \
