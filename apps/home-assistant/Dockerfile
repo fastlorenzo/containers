@@ -1,4 +1,4 @@
-FROM ghcr.io/fastlorenzo/alpine:rolling@sha256:17bd4ab7ae494bd90d5f81bd6a50e25a4ebd904ed4118e57803c68fa930ccf93
+FROM ghcr.io/fastlorenzo/alpine:rolling@sha256:1c325150682b776ee1493be67d591e8c6d3a317bab79db111d1ce9ccb48867d7
 
 
 # https://github.com/linuxserver/docker-homeassistant
