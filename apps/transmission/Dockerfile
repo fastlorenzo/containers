@@ -1,4 +1,4 @@
-FROM ghcr.io/fastlorenzo/alpine:rolling@sha256:1c325150682b776ee1493be67d591e8c6d3a317bab79db111d1ce9ccb48867d7
+FROM ghcr.io/fastlorenzo/alpine:rolling@sha256:02aacb0e1cb1141dd0f7fbd5f8069a8b41682aaecf143d12945759b44893ca16
 
 ARG TARGETPLATFORM
 ARG VERSION
