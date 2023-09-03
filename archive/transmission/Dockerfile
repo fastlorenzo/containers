@@ -22,7 +22,7 @@ RUN chown -R root:root /usr/bin/transmission* \
     && ln -s /usr/share/transmission/public_html /app/web \
     && rm -rf /tmp/*
 
-USER root
+USER kah
 COPY ./apps/transmission/settings.json.tmpl /app/settings.json.tmpl
 COPY ./apps/transmission/entrypoint.sh /entrypoint.sh
 CMD ["/entrypoint.sh"]
