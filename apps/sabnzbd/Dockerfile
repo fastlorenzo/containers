@@ -1,4 +1,4 @@
-FROM ghcr.io/onedr0p/par2cmdline-turbo:1.0.1 as par2cmdline-turbo
+FROM ghcr.io/onedr0p/par2cmdline-turbo:1.1.1 as par2cmdline-turbo
 
 FROM ghcr.io/fastlorenzo/alpine:rolling@sha256:0fa6798f7f353916f4ce849b43d43b3f892010521350904305ac3adca6cbc46e
 ARG TARGETPLATFORM
