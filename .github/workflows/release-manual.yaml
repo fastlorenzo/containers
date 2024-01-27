@@ -1,67 +1,41 @@
 ---
-name: "Manual Release"
+name: Release on Merge
 
 concurrency:
   group: container-release
   cancel-in-progress: false
 
 on:
-  workflow_dispatch:
-    inputs:
-      app:
-        description: "App (ex: radarr)"
-        default: ""
-        required: true
-      channels:
-        description: "Channels (ex: master,develop)"
-        default: ""
-        required: true
-      push:
-        description: "Push"
-        default: "false"
-        required: true
-
-env:
-  TOKEN: ${{ secrets.TOKEN }}
+  push:
+    branches: ["main"]
+    paths:
+      - "apps/**"
+      - ".github/scripts/templates/**"
+      - "!apps/**/metadata.json"
+      - "!apps/**/metadata.yaml"
+      - "!apps/**/README.md"
 
 jobs:
-  determine-images:
-    name: Determine Images to Build
-    runs-on: ubuntu-latest
-    outputs:
-      imagesToBuild: ${{ steps.determine-images.outputs.changes }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+  simple-checks:
+    uses: fastlorenzo/containers/.github/workflows/simple-checks.yaml@main
 
-      - name: Install tools
-        run: sudo apt-get install moreutils jo
+  get-changed-images:
+    needs: ["simple-checks"]
+    uses: fastlorenzo/containers/.github/workflows/get-changed-images.yaml@main
 
-      - name: Determine images to build
-        id: determine-images
-        shell: bash
-        run: |
-          if [ "${{ inputs.app }}" = "ALL" ]; then
-            ./.github/scripts/fetch.sh all
-          else
-            output="[]"
-            IFS=',' read -a channels <<< "${{ inputs.channels }}"
-            declare -a images_array=()
-            for channel in "${channels[@]}"; do
-              image="$(jo app="${{ inputs.app }}" channel="$channel")"
-              images_array+=($image)
-            done
-
-            output="$(jo -a ${images_array[*]})"
-            echo "changes=${output}" >> $GITHUB_OUTPUT
-            echo "Changes:\n ${output}"
-          fi
-
-  images-build:
-    uses: ./.github/workflows/action-image-build.yaml
-    if: needs.determine-images.outputs.imagesToBuild != '[]'
-    needs: ["determine-images"]
+  build-images:
+    needs: ["simple-checks", "get-changed-images"]
+    if: ${{ needs.get-changed-images.outputs.addedOrModified == 'true' }}
+    uses: fastlorenzo/containers/.github/workflows/build-images.yaml@main
+    secrets: inherit
     with:
-      imagesToBuild: "${{ needs.determine-images.outputs.imagesToBuild }}"
-      pushImages: "${{ github.event.inputs.push }}"
+      appsToBuild: "${{ needs.get-changed-images.outputs.addedOrModifiedImages }}"
+      pushImages: true
+      sendNotifications: true
+
+  render-readme:
+    name: Render Readme
+    needs: build-images
+    if: ${{ always() && needs.build-images.result != 'failure' }}
+    uses: ./.github/workflows/render-readme.yaml
     secrets: inherit

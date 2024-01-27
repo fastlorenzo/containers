@@ -1,4 +1,5 @@
-FROM ghcr.io/fastlorenzo/alpine:rolling@sha256:0fa6798f7f353916f4ce849b43d43b3f892010521350904305ac3adca6cbc46e
+# Force using 3.10
+FROM ghcr.io/fastlorenzo/alpine:3.17.3
 
 ARG TARGETPLATFORM
 ARG VERSION
@@ -23,7 +24,7 @@ RUN \
 RUN \
     apk add --no-cache ca-certificates mediainfo ffmpeg python3 py3-lxml py3-numpy py3-gevent py3-cryptography py3-setuptools py3-pillow py3-psycopg2 \
     && \
-    apk add --no-cache --virtual .build-deps py3-pip gcc python3-dev musl-dev \
+    apk add --no-cache --virtual .build-deps py3-pip python3-dev gcc musl-dev \
     && \
     pip install --upgrade pip \
     && \
