@@ -1,4 +1,5 @@
 ---
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
 name: "Image Build"
 
 on:
@@ -199,7 +200,6 @@ jobs:
           labels: |-
             org.opencontainers.image.title=${{ matrix.image.name }}
             org.opencontainers.image.url=https://ghcr.io/${{ env.LOWERCASE_REPO_OWNER }}/${{ matrix.image.name }}
-            org.opencontainers.image.source=https://github.com/${{ env.LOWERCASE_REPO_OWNER }}/containers
             org.opencontainers.image.version=${{ matrix.image.version }}
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.vendor=${{ env.LOWERCASE_REPO_OWNER }}
@@ -260,7 +260,7 @@ jobs:
       - name: Download Digests
         uses: actions/download-artifact@v4
         with:
-          pattern: ${{ matrix.image.name }}-*
+          pattern: "${{ matrix.image.name }}-{linux,darwin}-{amd64,arm64}"
           merge-multiple: true
           path: /tmp/${{ matrix.image.name }}
 
@@ -329,14 +329,14 @@ jobs:
           echo "message=💥 ${{ matrix.image.name }} (${{ matrix.image.tags[0] }})" >> $GITHUB_OUTPUT
           echo "color=0xFF0000" >> $GITHUB_OUTPUT
 
-      # - name: Send Discord Webhook
-      #   uses: sarisia/actions-status-discord@v1
-      #   if: ${{ always() && inputs.sendNotifications == 'true' }}
-      #   with:
-      #     webhook: ${{ secrets.DISCORD_WEBHOOK }}
-      #     title: ${{ steps.build-failed.outputs.message || steps.build-success.outputs.message }}
-      #     color: ${{ steps.build-failed.outputs.color || steps.build-success.outputs.color }}
-      #     username: GitHub Actions
+      - name: Send Discord Webhook
+        uses: sarisia/actions-status-discord@v1
+        if: ${{ always() && inputs.sendNotifications == 'true' }}
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}
+          title: ${{ steps.build-failed.outputs.message || steps.build-success.outputs.message }}
+          color: ${{ steps.build-failed.outputs.color || steps.build-success.outputs.color }}
+          username: GitHub Actions
 
   # Summarize matrix https://github.community/t/status-check-for-a-matrix-jobs/127354/7
   build_success:
