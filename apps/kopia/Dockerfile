@@ -14,7 +14,9 @@ ENV KOPIA_CONFIG_PATH="/config/repository.config" \
 #hadolint ignore=DL3018 ignore=DL3059
 RUN apk add --no-cache \
     ca-certificates \
-    rclone && \
+    rclone \
+    curl \
+    && \
     case "${TARGETPLATFORM}" in \
     'linux/amd64') export ARCH='x64' ;; \
     'linux/arm64') export ARCH='arm64' ;; \
