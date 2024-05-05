@@ -110,6 +110,8 @@ Container | Channel | Image
 --- | --- | ---
 [bazarr](https://github.com/fastlorenzo/containers/pkgs/container/bazarr) | stable | ghcr.io/fastlorenzo/bazarr
 [home-assistant](https://github.com/fastlorenzo/containers/pkgs/container/home-assistant) | stable | ghcr.io/fastlorenzo/home-assistant
+[kopia](https://github.com/fastlorenzo/containers/pkgs/container/kopia) | stable | ghcr.io/fastlorenzo/kopia
+[mktxp](https://github.com/fastlorenzo/containers/pkgs/container/mktxp) | stable | ghcr.io/fastlorenzo/mktxp
 
 
 ## Deprecations
