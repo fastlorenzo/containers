@@ -108,32 +108,8 @@ Each Image will be built with a `rolling` tag, along with tags specific to it's 
 
 Container | Channel | Image
 --- | --- | ---
-[alpine](https://github.com/fastlorenzo/containers/pkgs/container/alpine) | 3.19 | ghcr.io/fastlorenzo/alpine
 [bazarr](https://github.com/fastlorenzo/containers/pkgs/container/bazarr) | stable | ghcr.io/fastlorenzo/bazarr
-[cni-plugins](https://github.com/fastlorenzo/containers/pkgs/container/cni-plugins) | stable | ghcr.io/fastlorenzo/cni-plugins
 [home-assistant](https://github.com/fastlorenzo/containers/pkgs/container/home-assistant) | stable | ghcr.io/fastlorenzo/home-assistant
-[kopia](https://github.com/fastlorenzo/containers/pkgs/container/kopia) | stable | ghcr.io/fastlorenzo/kopia
-[kubernetes-kubectl](https://github.com/fastlorenzo/containers/pkgs/container/kubernetes-kubectl) | kubectl | ghcr.io/fastlorenzo/kubernetes-kubectl
-[lidarr](https://github.com/fastlorenzo/containers/pkgs/container/lidarr) | master | ghcr.io/fastlorenzo/lidarr
-[lidarr-develop](https://github.com/fastlorenzo/containers/pkgs/container/lidarr-develop) | develop | ghcr.io/fastlorenzo/lidarr-develop
-[lidarr-nightly](https://github.com/fastlorenzo/containers/pkgs/container/lidarr-nightly) | nightly | ghcr.io/fastlorenzo/lidarr-nightly
-[lidarr-plugins](https://github.com/fastlorenzo/containers/pkgs/container/lidarr-plugins) | plugins | ghcr.io/fastlorenzo/lidarr-plugins
-[prowlarr](https://github.com/fastlorenzo/containers/pkgs/container/prowlarr) | master | ghcr.io/fastlorenzo/prowlarr
-[prowlarr-develop](https://github.com/fastlorenzo/containers/pkgs/container/prowlarr-develop) | develop | ghcr.io/fastlorenzo/prowlarr-develop
-[prowlarr-nightly](https://github.com/fastlorenzo/containers/pkgs/container/prowlarr-nightly) | nightly | ghcr.io/fastlorenzo/prowlarr-nightly
-[qbittorrent](https://github.com/fastlorenzo/containers/pkgs/container/qbittorrent) | stable | ghcr.io/fastlorenzo/qbittorrent
-[qbittorrent-beta](https://github.com/fastlorenzo/containers/pkgs/container/qbittorrent-beta) | beta | ghcr.io/fastlorenzo/qbittorrent-beta
-[radarr](https://github.com/fastlorenzo/containers/pkgs/container/radarr) | master | ghcr.io/fastlorenzo/radarr
-[radarr-develop](https://github.com/fastlorenzo/containers/pkgs/container/radarr-develop) | develop | ghcr.io/fastlorenzo/radarr-develop
-[radarr-nightly](https://github.com/fastlorenzo/containers/pkgs/container/radarr-nightly) | nightly | ghcr.io/fastlorenzo/radarr-nightly
-[readarr-develop](https://github.com/fastlorenzo/containers/pkgs/container/readarr-develop) | develop | ghcr.io/fastlorenzo/readarr-develop
-[readarr-nightly](https://github.com/fastlorenzo/containers/pkgs/container/readarr-nightly) | nightly | ghcr.io/fastlorenzo/readarr-nightly
-[sabnzbd](https://github.com/fastlorenzo/containers/pkgs/container/sabnzbd) | stable | ghcr.io/fastlorenzo/sabnzbd
-[sonarr](https://github.com/fastlorenzo/containers/pkgs/container/sonarr) | main | ghcr.io/fastlorenzo/sonarr
-[sonarr-develop](https://github.com/fastlorenzo/containers/pkgs/container/sonarr-develop) | develop | ghcr.io/fastlorenzo/sonarr-develop
-[tautulli](https://github.com/fastlorenzo/containers/pkgs/container/tautulli) | master | ghcr.io/fastlorenzo/tautulli
-[theme-park](https://github.com/fastlorenzo/containers/pkgs/container/theme-park) | stable | ghcr.io/fastlorenzo/theme-park
-[ubuntu](https://github.com/fastlorenzo/containers/pkgs/container/ubuntu) | jammy | ghcr.io/fastlorenzo/ubuntu
 
 
 ## Deprecations
