@@ -112,6 +112,7 @@ Container | Channel | Image
 [home-assistant](https://github.com/fastlorenzo/containers/pkgs/container/home-assistant) | stable | ghcr.io/fastlorenzo/home-assistant
 [kopia](https://github.com/fastlorenzo/containers/pkgs/container/kopia) | stable | ghcr.io/fastlorenzo/kopia
 [mktxp](https://github.com/fastlorenzo/containers/pkgs/container/mktxp) | stable | ghcr.io/fastlorenzo/mktxp
+[postgres-init](https://github.com/fastlorenzo/containers/pkgs/container/postgres-init) | stable | ghcr.io/fastlorenzo/postgres-init
 
 
 ## Deprecations
