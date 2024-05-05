@@ -1,4 +1,4 @@
-FROM ghcr.io/fastlorenzo/alpine:rolling@sha256:b6206e3f8bc7dec38e3d2e8503fcc439425b56a34584e26f97a5da6faf093b76
+FROM docker.io/library/alpine:3.19
 
 ARG TARGETPLATFORM
 ARG VERSION
@@ -11,10 +11,10 @@ ENV KOPIA_CONFIG_PATH="/config/repository.config" \
     KOPIA_CHECK_FOR_UPDATES="false" \
     RCLONE_CONFIG="/config/rclone/rclone.conf"
 
-#hadolint ignore=DL3018
-RUN apk add --no-cache ca-certificates rclone
-#hadolint ignore=DL3059
-RUN \
+#hadolint ignore=DL3018 ignore=DL3059
+RUN apk add --no-cache \
+    ca-certificates \
+    rclone && \
     case "${TARGETPLATFORM}" in \
     'linux/amd64') export ARCH='x64' ;; \
     'linux/arm64') export ARCH='arm64' ;; \
