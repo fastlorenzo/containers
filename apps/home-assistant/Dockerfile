@@ -1,9 +1,4 @@
-FROM ghcr.io/fastlorenzo/alpine:rolling@sha256:b6206e3f8bc7dec38e3d2e8503fcc439425b56a34584e26f97a5da6faf093b76
-
-# https://github.com/linuxserver/docker-homeassistant
-# https://github.com/home-assistant/docker
-# https://github.com/home-assistant/docker-base
-# https://github.com/pypa/pip/issues/10788
+FROM docker.io/library/python:3.12-alpine
 
 ARG TARGETPLATFORM
 ARG VERSION
@@ -20,7 +15,12 @@ ENV \
     PYTHONPATH="${PYTHONPATH}:/pip-packages" \
     HOME="/config"
 
-WORKDIR /tmp
+ENV UMASK="0002" \
+    TZ="Etc/UTC"
+
+USER root
+WORKDIR /app
+
 
 #hadolint ignore=DL3018
 RUN \
@@ -47,8 +47,36 @@ RUN \
         socat \
         tiff
 
-#hadolint ignore=DL3018,DL3013,DL3059
+#hadolint ignore=DL3018,DL3013,DL3059,DL4006
 RUN \
+    apk add --no-cache \
+        bash \
+        bluez \
+        bluez-deprecated \
+        bluez-libs \
+        ca-certificates \
+        catatonit \
+        cups-libs \
+        curl \
+        eudev-libs \
+        ffmpeg \
+        git \
+        jq \
+        libcap \
+        libturbojpeg \
+        libstdc++ \
+        libxslt \
+        mariadb-connector-c \
+        mariadb-connector-c-dev \
+        nano \
+        openssh-client \
+        openssl \
+        postgresql-libs \
+        socat \
+        tiff \
+        tzdata \
+        unzip \
+    && \
     apk add --no-cache --virtual=.build-deps \
         autoconf \
         build-base \
@@ -63,34 +91,12 @@ RUN \
         libxml2-dev \
         libxslt-dev \
         postgresql-dev \
-        python3-dev \
-        unixodbc-dev
-
-#hadolint ignore=DL3018,DL3013,DL3059
-RUN \
-    pip install --upgrade \
-        cython \
-        pip \
-        pyparsing \
-        setuptools \
-        wheel
-
-#hadolint ignore=DL3018,DL3013,DL3059,DL4006
-RUN \
+        unixodbc-dev \
+    && \
+    pip install uv \
+    && \
     curl -fsSL "https://github.com/home-assistant/core/archive/${VERSION}.tar.gz" \
         | tar xzf - -C /tmp --strip-components=1 \
-    && \
-    mkdir -p /pip-packages \
-    && \
-    pip install \
-        --upgrade \
-        --target /pip-packages \
-        distlib \
-    && \
-    NUMPY_VERSION=$(grep "numpy" requirements_all.txt) \
-    && \
-    pip install --find-links "${HOMEASSISTANT_WHEELS}" \
-        "${NUMPY_VERSION}" \
     && \
     case "${TARGETPLATFORM}" in \
         'linux/amd64') \
@@ -103,17 +109,14 @@ RUN \
     && \
     HOME_ASSISTANT_BASE=$(curl -fsSL "https://raw.githubusercontent.com/home-assistant/core/${VERSION}/build.yaml" | grep "${ARCH}: " | cut -d ":" -f3) \
     && \
-    pip install --no-index --only-binary=:all: --find-links "${HOMEASSISTANT_WHEELS}" \
+    uv pip install --system --only-binary=:all: --find-links "${HOMEASSISTANT_WHEELS}" \
         --requirement "https://raw.githubusercontent.com/home-assistant/docker/${HOME_ASSISTANT_BASE}/requirements.txt" \
     && \
-    pip install --find-links "${HOMEASSISTANT_WHEELS}" \
-        --requirement requirements_all.txt \
+    uv pip install --system --only-binary=:all: --find-links "${HOMEASSISTANT_WHEELS}" \
+        --requirement /tmp/requirements_all.txt \
     && \
-    pip install --only-binary=:all: --find-links "${HOMEASSISTANT_WHEELS}" \
+    uv pip install --system --only-binary=:all: --find-links "${HOMEASSISTANT_WHEELS}" \
         homeassistant=="${VERSION}" \
-    && \
-    pip install --find-links "${HOMEASSISTANT_WHEELS}" \
-        pycups PySwitchbot \
     && \
     apk del --purge .build-deps \
     && \
@@ -122,9 +125,9 @@ RUN \
         /root/.cargo \
         /tmp/*
 
-WORKDIR /app
-USER kah
 COPY ./apps/home-assistant/entrypoint.sh /entrypoint.sh
+
+ENTRYPOINT ["/usr/bin/catatonit", "--"]
 CMD ["/entrypoint.sh"]
 
 LABEL org.opencontainers.image.source="https://github.com/home-assistant/core"

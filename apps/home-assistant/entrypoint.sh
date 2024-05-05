@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
-#shellcheck disable=SC1091
-test -f "/scripts/umask.sh" && source "/scripts/umask.sh"
+mkdir -p /config/logs
 
 if [[ "${HOME_ASSISTANT__HACS_INSTALL}" == "true" ]]; then
-    wget -O - https://get.hacs.xyz | bash -
+    curl -sfSL https://hacs.xyz/install | bash -
 fi
 
 exec \
-    /usr/bin/hass \
-    --config /config \
-    "$@"
+    /usr/local/bin/hass \
+        --config /config \
+        --log-file /config/logs/home-assistant.log \
+        "$@"
