@@ -1,6 +1,6 @@
 <!---
 NOTE: AUTO-GENERATED FILE
-to edit this file, instead edit its template at: ./github/scripts/templates/README.md.j2
+to edit this file, instead edit its template at: ./scripts/templates/README.md.j2
 -->
 <div align="center">
 
@@ -89,11 +89,10 @@ Some applications do not support defining configuration via environment variable
 
 1. First read the Kubernetes docs on [defining command and arguments for a Container](https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/).
 2. Look up the documentation for the application and find a argument you would like to set.
-3. Set the argument in the `args` section, be sure to include `entrypoint.sh` as the first arg and any application specific arguments thereafter.
+3. Set the extra arguments in the `args` section like below.
 
     ```yaml
     args:
-      - /entrypoint.sh
       - --port
       - "8080"
     ```
@@ -113,6 +112,9 @@ Container | Channel | Image
 [kopia](https://github.com/fastlorenzo/containers/pkgs/container/kopia) | stable | ghcr.io/fastlorenzo/kopia
 [mktxp](https://github.com/fastlorenzo/containers/pkgs/container/mktxp) | stable | ghcr.io/fastlorenzo/mktxp
 [postgres-init](https://github.com/fastlorenzo/containers/pkgs/container/postgres-init) | stable | ghcr.io/fastlorenzo/postgres-init
+[radarr](https://github.com/fastlorenzo/containers/pkgs/container/radarr) | master | ghcr.io/fastlorenzo/radarr
+[radarr-develop](https://github.com/fastlorenzo/containers/pkgs/container/radarr-develop) | develop | ghcr.io/fastlorenzo/radarr-develop
+[radarr-nightly](https://github.com/fastlorenzo/containers/pkgs/container/radarr-nightly) | nightly | ghcr.io/fastlorenzo/radarr-nightly
 
 
 ## Deprecations
