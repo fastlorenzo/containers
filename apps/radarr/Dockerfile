@@ -1,4 +1,5 @@
-FROM ghcr.io/fastlorenzo/alpine:rolling@sha256:b6206e3f8bc7dec38e3d2e8503fcc439425b56a34584e26f97a5da6faf093b76
+ARG VERSION
+FROM docker.io/library/alpine:3.21
 
 ARG TARGETPLATFORM
 ARG VERSION
@@ -9,10 +10,7 @@ ENV UMASK="0002" \
 
 ENV \
     COMPlus_EnableDiagnostics="0" \
-    RADARR__INSTANCE_NAME="Radarr" \
-    RADARR__BRANCH="${CHANNEL}" \
-    RADARR__PORT="7878" \
-    RADARR__ANALYTICS_ENABLED="False"
+    RADARR__UPDATE__BRANCH="${CHANNEL}"
 
 USER root
 WORKDIR /app
@@ -41,7 +39,7 @@ RUN \
     && mkdir -p /app/bin \
     && curl -fsSL "https://radarr.servarr.com/v1/update/${RADARR__UPDATE__BRANCH}/updatefile?version=${VERSION}&os=linuxmusl&runtime=netcore&arch=${ARCH}" \
         | tar xzf - -C /app/bin --strip-components=1 \
-    && printf "UpdateMethod=docker\nBranch=%s\nPackageVersion=%s\nPackageAuthor=[onedr0p](https://github.com/onedr0p)\n" "${RADARR__UPDATE__BRANCH}" "${VERSION}" > /app/package_info \
+    && printf "UpdateMethod=docker\nBranch=%s\nPackageVersion=%s\nPackageAuthor=[fastlorenzo](https://github.com/fastlorenzo)\n" "${RADARR__UPDATE__BRANCH}" "${VERSION}" > /app/package_info \
     && chown -R root:root /app && chmod -R 755 /app \
     && rm -rf /tmp/* /app/bin/Radarr.Update
 
