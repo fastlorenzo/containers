@@ -1,4 +1,4 @@
-FROM bitnami/redmine:5-debian-11
+FROM bitnami/redmine:6.0.2-debian-12-r0
 
 # RUN install_packages build-essential default-libmysqlclient-dev libpq-dev libmagickwand-dev
 
