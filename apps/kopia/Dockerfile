@@ -16,6 +16,8 @@ RUN apk add --no-cache \
     ca-certificates \
     rclone \
     curl \
+    bash \
+    jq \
     && \
     case "${TARGETPLATFORM}" in \
     'linux/amd64') export ARCH='x64' ;; \
