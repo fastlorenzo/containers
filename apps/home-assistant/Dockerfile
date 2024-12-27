@@ -15,8 +15,8 @@ ENV \
     UV_NO_CACHE=true \
     CRYPTOGRAPHY_DONT_BUILD_RUST=1 \
     HOMEASSISTANT_WHEELS="https://wheels.home-assistant.io/musllinux/" \
-    PYTHONPATH="/config/deps" \
-    HOME="/config"
+    HOME="/config" \
+    PYTHONPATH="/config/deps"
 
 ENV UMASK="0002" \
     TZ="Etc/UTC"
@@ -28,6 +28,7 @@ WORKDIR /app
 RUN \
     apk add --no-cache \
         bash \
+        binutils \
         bluez \
         bluez-deprecated \
         bluez-libs \
@@ -56,10 +57,9 @@ RUN \
         tiff \
         trurl \
         tzdata \
-        unzip
-
-#hadolint ignore=DL3018,DL3013,DL3059,DL4006
-RUN \
+        unzip \
+        vim \
+    && \
     apk add --no-cache --virtual=.build-deps \
         autoconf \
         build-base \
@@ -76,7 +76,7 @@ RUN \
         postgresql-dev \
         unixodbc-dev \
     && \
-    pip install uv \
+    pip install uv==0.5.11 \
     && \
     curl -fsSL "https://github.com/home-assistant/core/archive/${VERSION}.tar.gz" \
         | tar xzf - -C /tmp --strip-components=1 \
