@@ -1,4 +1,4 @@
-FROM docker.io/library/python:3.12-alpine
+FROM docker.io/library/python:3.13.1-alpine
 
 ARG TARGETPLATFORM
 ARG VERSION
@@ -11,8 +11,11 @@ ENV \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PIP_BREAK_SYSTEM_PACKAGES=1 \
+    UV_SYSTEM_PYTHON=true \
+    UV_NO_CACHE=true \
+    CRYPTOGRAPHY_DONT_BUILD_RUST=1 \
     HOMEASSISTANT_WHEELS="https://wheels.home-assistant.io/musllinux/" \
-    PYTHONPATH="${PYTHONPATH}:/pip-packages" \
+    PYTHONPATH="/config/deps" \
     HOME="/config"
 
 ENV UMASK="0002" \
@@ -21,33 +24,7 @@ ENV UMASK="0002" \
 USER root
 WORKDIR /app
 
-
 #hadolint ignore=DL3018
-RUN \
-    apk add --no-cache \
-        bluez \
-        bluez-deprecated \
-        bluez-libs \
-        ca-certificates \
-        cups-libs \
-        eudev-libs \
-        ffmpeg \
-        git \
-        libcap \
-        libjpeg-turbo \
-        libstdc++ \
-        libxslt \
-        mariadb-connector-c \
-        mariadb-connector-c-dev \
-        openssh-client \
-        openssl \
-        postgresql-libs \
-        py3-pip \
-        python3 \
-        socat \
-        tiff
-
-#hadolint ignore=DL3018,DL3013,DL3059,DL4006
 RUN \
     apk add --no-cache \
         bash \
@@ -56,27 +33,33 @@ RUN \
         bluez-libs \
         ca-certificates \
         catatonit \
+        coreutils \
         cups-libs \
         curl \
         eudev-libs \
         ffmpeg \
         git \
+        iputils \
+        jo \
         jq \
         libcap \
-        libturbojpeg \
+        libjpeg-turbo-dev \
+        libpcap-dev \
         libstdc++ \
         libxslt \
         mariadb-connector-c \
         mariadb-connector-c-dev \
-        nano \
         openssh-client \
         openssl \
         postgresql-libs \
         socat \
         tiff \
+        trurl \
         tzdata \
-        unzip \
-    && \
+        unzip
+
+#hadolint ignore=DL3018,DL3013,DL3059,DL4006
+RUN \
     apk add --no-cache --virtual=.build-deps \
         autoconf \
         build-base \
@@ -101,10 +84,12 @@ RUN \
     case "${TARGETPLATFORM}" in \
         'linux/amd64') \
             export ARCH='amd64'; \
-        ;; \
+            export GO2RTC_SUFFIX='amd64'; \
+            ;; \
         'linux/arm64') \
             export ARCH='aarch64'; \
-        ;; \
+            export GO2RTC_SUFFIX='arm64'; \
+            ;; \
     esac \
     && \
     HOME_ASSISTANT_BASE=$(curl -fsSL "https://raw.githubusercontent.com/home-assistant/core/${VERSION}/build.yaml" | grep "${ARCH}: " | cut -d ":" -f3) \
@@ -117,17 +102,18 @@ RUN \
     && \
     uv pip install --system --only-binary=:all: --find-links "${HOMEASSISTANT_WHEELS}" \
         homeassistant=="${VERSION}" \
-    && \
-    apk del --purge .build-deps \
-    && \
-    rm -rf \
-        /root/.cache \
-        /root/.cargo \
-        /tmp/*
+    && curl -L https://github.com/AlexxIT/go2rtc/releases/download/v1.9.7/go2rtc_linux_${GO2RTC_SUFFIX} --output /bin/go2rtc \
+    && chmod +x /bin/go2rtc \
+    && mkdir -p /config && chown nobody:nogroup -R /config \
+    && apk del --purge .build-deps \
+    && rm -rf /root/.cache /root/.cargo /tmp/*
 
 COPY ./apps/home-assistant/entrypoint.sh /entrypoint.sh
 
-ENTRYPOINT ["/usr/bin/catatonit", "--"]
-CMD ["/entrypoint.sh"]
+USER nobody:nogroup
+WORKDIR /config
+VOLUME ["/config"]
+
+ENTRYPOINT ["/usr/bin/catatonit", "--", "/entrypoint.sh"]
 
 LABEL org.opencontainers.image.source="https://github.com/home-assistant/core"
