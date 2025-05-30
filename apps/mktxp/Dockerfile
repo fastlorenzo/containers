@@ -1,4 +1,4 @@
-FROM docker.io/library/alpine:3.19
+FROM docker.io/library/alpine:3.22
 
 ARG TARGETPLATFORM
 ARG BUILDPLATFORM
