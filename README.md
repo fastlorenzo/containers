@@ -115,6 +115,8 @@ Container | Channel | Image
 [radarr](https://github.com/fastlorenzo/containers/pkgs/container/radarr) | master | ghcr.io/fastlorenzo/radarr
 [radarr-develop](https://github.com/fastlorenzo/containers/pkgs/container/radarr-develop) | develop | ghcr.io/fastlorenzo/radarr-develop
 [radarr-nightly](https://github.com/fastlorenzo/containers/pkgs/container/radarr-nightly) | nightly | ghcr.io/fastlorenzo/radarr-nightly
+[sonarr](https://github.com/fastlorenzo/containers/pkgs/container/sonarr) | main | ghcr.io/fastlorenzo/sonarr
+[sonarr-develop](https://github.com/fastlorenzo/containers/pkgs/container/sonarr-develop) | develop | ghcr.io/fastlorenzo/sonarr-develop
 
 
 ## Deprecations
