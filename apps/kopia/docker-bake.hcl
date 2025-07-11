@@ -5,8 +5,8 @@ variable "APP" {
 }
 
 variable "VERSION" {
-  // renovate: datasource=repology depName=alpine_3_22/kopia versioning=loose
-  default = "0.19.0-r5"
+  // renovate: datasource=github-releases depName=kopia/kopia
+  default = "0.20.1"
 }
 
 variable "SOURCE" {
