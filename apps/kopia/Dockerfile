@@ -2,6 +2,7 @@
 
 FROM docker.io/library/alpine:3.22
 ARG TARGETARCH
+ARG ARCH=${TARGETARCH/amd64/x64}
 ARG VERSION
 
 ENV KOPIA_CONFIG_PATH="/config/repository.config" \
@@ -22,7 +23,7 @@ RUN \
         jq \
         rclone \
     && \
-        wget https://github.com/kopia/kopia/releases/download/v${VERSION}/kopia-${VERSION}-linux-${TARGETARCH}.tar.gz \
+        wget https://github.com/kopia/kopia/releases/download/v${VERSION}/kopia-${VERSION}-linux-${ARCH}.tar.gz \
         -O /tmp/kopia.tar.gz \
     && tar -xzf /tmp/kopia.tar.gz -C /bin kopia \
     && chmod +x /bin/kopia \
