@@ -3,24 +3,20 @@
 # This is most commonly set to the user 'postgres'
 export INIT_POSTGRES_SUPER_USER=${INIT_POSTGRES_SUPER_USER:-postgres}
 export INIT_POSTGRES_PORT=${INIT_POSTGRES_PORT:-5432}
+export INIT_POSTGRES_UTF8=${INIT_POSTGRES_UTF8:-"false"}
 
-# Deprecated options below
-# export PGHOST="${POSTGRES_HOST}"
-# export PGUSER="${POSTGRES_SUPER_USER}"
-# export PGPASSWORD="${POSTGRES_SUPER_PASS}"
-
-if [[ -z "${INIT_POSTGRES_HOST}" ||
-    -z "${INIT_POSTGRES_SUPER_PASS}" ||
-    -z "${INIT_POSTGRES_USER}" ||
-    -z "${INIT_POSTGRES_PASS}" ||
-    -z "${INIT_POSTGRES_DBNAME}" ]] \
-    ; then
+if [[ -z "${INIT_POSTGRES_HOST}"       ||
+      -z "${INIT_POSTGRES_SUPER_PASS}" ||
+      -z "${INIT_POSTGRES_USER}"       ||
+      -z "${INIT_POSTGRES_PASS}"       ||
+      -z "${INIT_POSTGRES_DBNAME}"
+]]; then
     printf "\e[1;32m%-6s\e[m\n" "Invalid configuration - missing a required environment variable"
-    [[ -z "${INIT_POSTGRES_HOST}" ]] && printf "\e[1;32m%-6s\e[m\n" "INIT_POSTGRES_HOST: unset"
+    [[ -z "${INIT_POSTGRES_HOST}" ]]       && printf "\e[1;32m%-6s\e[m\n" "INIT_POSTGRES_HOST: unset"
     [[ -z "${INIT_POSTGRES_SUPER_PASS}" ]] && printf "\e[1;32m%-6s\e[m\n" "INIT_POSTGRES_SUPER_PASS: unset"
-    [[ -z "${INIT_POSTGRES_USER}" ]] && printf "\e[1;32m%-6s\e[m\n" "INIT_POSTGRES_USER: unset"
-    [[ -z "${INIT_POSTGRES_PASS}" ]] && printf "\e[1;32m%-6s\e[m\n" "INIT_POSTGRES_PASS: unset"
-    [[ -z "${INIT_POSTGRES_DBNAME}" ]] && printf "\e[1;32m%-6s\e[m\n" "INIT_POSTGRES_DBNAME: unset"
+    [[ -z "${INIT_POSTGRES_USER}" ]]       && printf "\e[1;32m%-6s\e[m\n" "INIT_POSTGRES_USER: unset"
+    [[ -z "${INIT_POSTGRES_PASS}" ]]       && printf "\e[1;32m%-6s\e[m\n" "INIT_POSTGRES_PASS: unset"
+    [[ -z "${INIT_POSTGRES_DBNAME}" ]]     && printf "\e[1;32m%-6s\e[m\n" "INIT_POSTGRES_DBNAME: unset"
     exit 1
 fi
 
@@ -30,18 +26,12 @@ export PGUSER="${INIT_POSTGRES_SUPER_USER}"
 export PGPASSWORD="${INIT_POSTGRES_SUPER_PASS}"
 export PGPORT="${INIT_POSTGRES_PORT}"
 
-# Deprecated old checks
-# if [[ -z "${PGHOST}" || -z "${PGHOST}" || -z "${PGPASSWORD}" || -z "${POSTGRES_USER}" || -z "${POSTGRES_PASS}" || -z "${POSTGRES_DB}" ]]; then
-#     printf "\e[1;32m%-6s\e[m\n" "Invalid configuration ..."
-#     exit 1
-# fi
-
 until pg_isready; do
     printf "\e[1;32m%-6s\e[m\n" "Waiting for Host '${PGHOST}' on port '${PGPORT}' ..."
     sleep 1
 done
 
-user_exists=$(
+user_exists=$(\
     psql \
         --tuples-only \
         --csv \
@@ -57,22 +47,27 @@ printf "\e[1;32m%-6s\e[m\n" "Update password for user ${INIT_POSTGRES_USER} ..."
 psql --command "alter user \"${INIT_POSTGRES_USER}\" with encrypted password '${INIT_POSTGRES_PASS}';"
 
 for dbname in ${INIT_POSTGRES_DBNAME}; do
-    database_exists=$(
+    database_exists=$(\
         psql \
             --tuples-only \
             --csv \
             --command "SELECT 1 FROM pg_database WHERE datname = '${dbname}'"
     )
     if [[ -z "${database_exists}" ]]; then
-        printf "\e[1;32m%-6s\e[m\n" "Create Database ${dbname} ..."
-        createdb --owner "${INIT_POSTGRES_USER}" "${dbname}"
+        if [[ "${INIT_POSTGRES_UTF8}" == "true" ]]; then
+            printf "\e[1;32m%-6s\e[m\n" "Create Database ${dbname} with UTF8 encoding ..."
+            createdb --template template0 --encoding UTF8 --owner "${INIT_POSTGRES_USER}" "${dbname}" 
+        else
+            printf "\e[1;32m%-6s\e[m\n" "Create Database ${dbname} ..."
+            createdb --owner "${INIT_POSTGRES_USER}" "${dbname}" 
+        fi
         database_init_file="/initdb/${dbname}.sql"
-        if [[ -f "$(database_init_file)" ]]; then
+        if [[ -f "${database_init_file}" ]]; then
             printf "\e[1;32m%-6s\e[m\n" "Initialize Database ..."
             psql \
                 --dbname "${dbname}" \
                 --echo-all \
-                --file "$(database_init_file)"
+                --file "${database_init_file}"
         fi
     fi
     printf "\e[1;32m%-6s\e[m\n" "Update User Privileges on Database ..."

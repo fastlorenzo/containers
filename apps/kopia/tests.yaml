@@ -1,0 +1,6 @@
+---
+schemaVersion: "2.0.0"
+fileExistenceTests:
+  - name: kopia
+    path: /usr/bin/kopia
+    shouldExist: true

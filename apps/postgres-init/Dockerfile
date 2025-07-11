@@ -1,23 +1,15 @@
-FROM docker.io/library/alpine:3.20
+# syntax=docker/dockerfile:1
 
-ARG TARGETPLATFORM
+FROM docker.io/library/alpine:3.22
 ARG VERSION
-ARG CHANNEL
-
 USER root
-WORKDIR /app
-
-#hadolint ignore=DL3018
 RUN \
     apk add --no-cache \
         bash \
         ca-certificates \
         catatonit \
-        postgresql14-client~"${VERSION}"
-
-COPY ./apps/postgres-init/entrypoint.sh /entrypoint.sh
-
-ENTRYPOINT ["/usr/bin/catatonit", "--"]
-CMD ["/entrypoint.sh"]
-
-LABEL org.opencontainers.image.source="https://github.com/postgres/postgres"
+        postgresql14-client=="${VERSION}" \
+    && rm -rf /tmp/*
+COPY . /
+USER nobody:nogroup
+ENTRYPOINT ["/usr/bin/catatonit", "--", "/entrypoint.sh"]

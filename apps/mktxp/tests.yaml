@@ -1,0 +1,6 @@
+---
+schemaVersion: "2.0.0"
+fileExistenceTests:
+  - name: mktxp
+    path: /usr/bin/mktxp
+    shouldExist: true

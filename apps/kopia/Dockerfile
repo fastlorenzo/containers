@@ -1,8 +1,8 @@
-FROM docker.io/library/alpine:3.19
+# syntax=docker/dockerfile:1
 
-ARG TARGETPLATFORM
+FROM docker.io/library/alpine:3.22
 ARG VERSION
-ARG CHANNEL
+USER root
 
 ENV KOPIA_CONFIG_PATH="/config/repository.config" \
     KOPIA_LOG_DIR="/config/logs" \
@@ -11,23 +11,14 @@ ENV KOPIA_CONFIG_PATH="/config/repository.config" \
     KOPIA_CHECK_FOR_UPDATES="false" \
     RCLONE_CONFIG="/config/rclone/rclone.conf"
 
-#hadolint ignore=DL3018 ignore=DL3059
-RUN apk add --no-cache \
-    ca-certificates \
-    rclone \
-    curl \
-    bash \
-    jq \
-    && \
-    case "${TARGETPLATFORM}" in \
-    'linux/amd64') export ARCH='x64' ;; \
-    'linux/arm64') export ARCH='arm64' ;; \
-    esac \
-    && \
-    curl -fsSL "https://github.com/kopia/kopia/releases/download/v${VERSION}/kopia-${VERSION}-linux-${ARCH}.tar.gz" \
-    | tar xzf - -C /usr/bin/ --strip-components=1 \
+RUN \
+    apk add --no-cache \
+        bash \
+        ca-certificates \
+        curl \
+        jq \
+        kopia \
+        rclone \
     && rm -rf /tmp/*
 
 CMD ["kopia"]
-
-LABEL org.opencontainers.image.source="https://github.com/kopia/kopia"

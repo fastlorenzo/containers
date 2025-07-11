@@ -1,13 +1,17 @@
 #!/usr/bin/env bash
 
-mkdir -p /config/logs
+unset UV_SYSTEM_PYTHON
 
-if [[ "${HOME_ASSISTANT__HACS_INSTALL}" == "true" ]]; then
-    curl -sfSL https://get.hacs.xyz | bash -
-fi
+mkdir -p "${VENV_FOLDER}"
+uv venv --system-site-packages --link-mode=copy --allow-existing "${VENV_FOLDER}"
+source "${VENV_FOLDER}/bin/activate"
+
+site_packages=$(python -c "import sysconfig; print(sysconfig.get_path('purelib'))")
+uv pip install --no-index --find-links="${site_packages}" uv
+
+ln -sf /proc/self/fd/1 /config/home-assistant.log
 
 exec \
-    /usr/local/bin/hass \
+    python3 -m homeassistant \
         --config /config \
-        --log-file /config/logs/home-assistant.log \
         "$@"
