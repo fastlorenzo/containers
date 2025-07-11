@@ -17,15 +17,15 @@ WORKDIR /app
 
 RUN \
     apk add --no-cache \
-        bash \
-        ca-certificates \
-        curl \
-        jq \
-        rclone \
+    bash \
+    ca-certificates \
+    curl \
+    jq \
+    rclone \
     && \
-        wget https://github.com/kopia/kopia/releases/download/v${VERSION}/kopia-${VERSION}-linux-${ARCH}.tar.gz \
-        -O /tmp/kopia.tar.gz \
-    && tar -xzf /tmp/kopia.tar.gz -C /bin kopia \
+    wget https://github.com/kopia/kopia/releases/download/v${VERSION}/kopia-${VERSION}-linux-${ARCH}.tar.gz \
+    -O /tmp/kopia.tar.gz \
+    && tar --strip-components=1 -xzf /tmp/kopia.tar.gz -C /bin kopia-${VERSION}-linux-${ARCH}/kopia \
     && chmod +x /bin/kopia \
     && rm -rf /tmp/*
 
