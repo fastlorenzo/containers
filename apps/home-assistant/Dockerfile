@@ -100,6 +100,9 @@ RUN \
     uv pip install --only-binary=:all: --requirement /tmp/requirements_all.txt \
     && \
     uv pip install --only-binary=:all: homeassistant=="${VERSION}" \
+    # Install additional dependencies
+    && uv pip install --only-binary=:all: \
+        pymodbus \
     && curl -fsSL -o /bin/go2rtc \
         "https://github.com/AlexxIT/go2rtc/releases/latest/download/go2rtc_linux_${TARGETARCH}" \
     && chmod +x /bin/go2rtc \
