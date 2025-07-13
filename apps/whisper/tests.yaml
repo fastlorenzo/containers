@@ -1,0 +1,6 @@
+---
+schemaVersion: "2.0.0"
+fileExistenceTests:
+  - name: whisper
+    path: /usr/local/bin/whisper
+    shouldExist: true

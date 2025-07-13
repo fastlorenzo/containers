@@ -2,6 +2,6 @@
 
 exec \
     /app/bin/Sonarr \
-        --nobrowser \
-        --data=/config \
-        "$@"
+    --nobrowser \
+    --data=/config \
+    "$@"
