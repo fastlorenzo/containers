@@ -6,7 +6,7 @@ variable "APP" {
 
 variable "VERSION" {
   // renovate: datasource=pypi depName=mktxp
-  default = "1.2.11"
+  default = "1.2.12"
 }
 
 variable "SOURCE" {
