@@ -49,7 +49,7 @@ def check(request: Request):
     return Response(status_code=401)
 
 
-@app.post("/allow")
+@app.get("/allow")
 def allow(request: Request):
     """
     Allow the client IP to be whitelisted.
@@ -61,7 +61,7 @@ def allow(request: Request):
     return Response(status_code=204)
 
 
-@app.post("/disallow")
+@app.get("/disallow")
 def disallow(request: Request):
     """
     Disallow the client IP from being whitelisted.
