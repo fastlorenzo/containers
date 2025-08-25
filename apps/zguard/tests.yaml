@@ -1,0 +1,14 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/goss-org/goss/master/docs/schema.yaml
+process:
+  python3.12:
+    running: true
+port:
+  tcp:8080:
+    listening: true
+http:
+  http://localhost:8080/healthz:
+    status: 200
+file:
+  /app/main.py:
+    exists: true
