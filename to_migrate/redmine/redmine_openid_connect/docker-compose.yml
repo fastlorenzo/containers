@@ -29,7 +29,7 @@ services:
   # In order to start the application, run `docker-compose up app` (or set up
   # a shorter alias for that command).
   app:
-    image: redmine:5.0.5
+    image: redmine:5.1.11
     restart: always
     ports:
       - "3000:3000"
