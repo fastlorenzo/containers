@@ -1,0 +1,30 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/goss-org/goss/master/docs/schema.yaml
+command:
+  jq-installed:
+    exit-status: 0
+    exec: "jq --version"
+  python3-installed:
+    exit-status: 0
+    exec: "python3 --version"
+  go-installed:
+    exit-status: 0
+    exec: "go version"
+  git-installed:
+    exit-status: 0
+    exec: "git --version"
+  curl-installed:
+    exit-status: 0
+    exec: "curl --version"
+  ssh-installed:
+    exit-status: 0
+    exec: "ssh -V"
+  unzip-installed:
+    exit-status: 0
+    exec: "which unzip"
+  node-installed:
+    exit-status: 0
+    exec: "node --version"
+  openclaw-binary:
+    exit-status: 0
+    exec: "openclaw --version"
