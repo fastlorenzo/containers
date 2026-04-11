@@ -1,0 +1,21 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/goss-org/goss/master/docs/schema.yaml
+process:
+  node:
+    running: true
+port:
+  tcp:18789:
+    listening: true
+http:
+  http://localhost:18789/healthz:
+    status: 200
+command:
+  gh:
+    exit-status: 1
+    exec: "which jq"
+  python3:
+    exit-status: 0
+    exec: "python3 --version"
+  go:
+    exit-status: 0
+    exec: "go version"
