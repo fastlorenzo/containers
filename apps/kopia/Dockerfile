@@ -29,4 +29,7 @@ RUN \
     && chmod +x /bin/kopia \
     && rm -rf /tmp/*
 
+COPY scripts/ /scripts/
+RUN chmod +x /scripts/*.sh
+
 CMD ["kopia"]
