@@ -6,7 +6,7 @@ variable "APP" {
 
 variable "VERSION" {
   // renovate: datasource=github-releases depName=kopia/kopia
-  default = "0.22.3"
+  default = "0.23.0"
 }
 
 variable "SOURCE" {
