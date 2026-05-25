@@ -13,6 +13,7 @@ RUN apt-get update && \
       python3 \
       golang-go \
       openssh-client \
+      vim \
     && rm -rf /var/lib/apt/lists/*
 
 USER node
