@@ -1,0 +1,10 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/goss-org/goss/master/docs/schema.yaml
+file:
+  /usr/libexec/tangd:
+    exists: true
+  /bin/busybox:
+    exists: true
+  /entrypoint.sh:
+    exists: true
+    mode: "0755"

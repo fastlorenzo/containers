@@ -1,0 +1,15 @@
+---
+schemaVersion: "2.0.0"
+fileExistenceTests:
+  - name: tangd
+    path: /usr/libexec/tangd
+    shouldExist: true
+  - name: tangd-keygen
+    path: /usr/libexec/tangd-keygen
+    shouldExist: true
+  - name: busybox
+    path: /bin/busybox
+    shouldExist: true
+  - name: entrypoint
+    path: /entrypoint.sh
+    shouldExist: true
