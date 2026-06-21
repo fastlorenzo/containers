@@ -28,3 +28,6 @@ command:
   openclaw-binary:
     exit-status: 0
     exec: "openclaw --version"
+  qmd-installed:
+    exit-status: 0
+    exec: "qmd --version"

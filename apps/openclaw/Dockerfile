@@ -16,4 +16,10 @@ RUN apt-get update && \
       vim \
     && rm -rf /var/lib/apt/lists/*
 
+# qmd memory search sidecar for OpenClaw (https://docs.openclaw.ai/concepts/memory-qmd/)
+# renovate: datasource=npm depName=@tobilu/qmd
+ARG QMD_VERSION=2.5.3
+RUN npm install -g @tobilu/qmd@${QMD_VERSION} && \
+    npm cache clean --force
+
 USER node
