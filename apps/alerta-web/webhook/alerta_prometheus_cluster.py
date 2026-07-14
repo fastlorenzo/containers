@@ -7,10 +7,27 @@ from alerta.webhooks import WebhookBase
 from alerta.webhooks.prometheus import parse_prometheus
 
 
+# Alerta's default alarm model hard-rejects severities outside its fixed
+# set (alerta/models/alarms/alerta.py raises ApiError, which surfaces as a
+# 500 and fails the WHOLE grouped Alertmanager notification). Prometheus
+# rules commonly use the critical/error/warning/info convention, so map the
+# two names Alerta doesn't know and coerce anything else unrecognized to
+# "indeterminate" instead of letting one alert poison the batch.
+VALID_SEVERITIES = {
+    "security", "critical", "major", "minor", "warning", "indeterminate",
+    "informational", "normal", "ok", "cleared", "debug", "trace", "unknown",
+}
+SEVERITY_MAP = {
+    "error": "major",
+    "info": "informational",
+}
+
+
 class PrometheusClusterWebhook(WebhookBase):
     """
     Prometheus Alertmanager webhook that maps the Prometheus `cluster`
-    label to the Alerta `environment` field.
+    label to the Alerta `environment` field and normalizes Prometheus
+    severity names to Alerta's alarm model.
     """
 
     def incoming(
@@ -56,6 +73,15 @@ class PrometheusClusterWebhook(WebhookBase):
             if isinstance(cluster, str) and cluster.strip():
                 # Let the standard Alerta Prometheus parser handle the rest.
                 labels["environment"] = cluster.strip()
+
+            severity = labels.get("severity")
+            if isinstance(severity, str):
+                severity = severity.strip().lower()
+                labels["severity"] = SEVERITY_MAP.get(
+                    severity,
+                    severity if severity in VALID_SEVERITIES
+                    else "indeterminate",
+                )
 
             parsed_alerts.append(
                 parse_prometheus(transformed_alert, external_url)
