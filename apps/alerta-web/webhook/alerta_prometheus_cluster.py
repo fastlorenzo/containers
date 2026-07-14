@@ -47,15 +47,15 @@ class PrometheusClusterWebhook(WebhookBase):
                     400,
                 )
 
+            # Alertmanager groups several alerts into one notification; a 400
+            # here would reject the whole batch (and dead-man style alerts
+            # built on absent()/vector(1) legitimately carry no cluster
+            # label). When the label is missing, inject nothing and let
+            # parse_prometheus fall back to DEFAULT_ENVIRONMENT.
             cluster = labels.get("cluster")
-            if not isinstance(cluster, str) or not cluster.strip():
-                raise ApiError(
-                    'Prometheus alert is missing required label "cluster"',
-                    400,
-                )
-
-            # Let the standard Alerta Prometheus parser handle everything else.
-            labels["environment"] = cluster.strip()
+            if isinstance(cluster, str) and cluster.strip():
+                # Let the standard Alerta Prometheus parser handle the rest.
+                labels["environment"] = cluster.strip()
 
             parsed_alerts.append(
                 parse_prometheus(transformed_alert, external_url)

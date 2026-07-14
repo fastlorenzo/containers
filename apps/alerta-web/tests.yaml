@@ -5,3 +5,8 @@ fileExistenceTests:
   - name: alerta
     path: /venv/bin/alerta
     shouldExist: true
+commandTests:
+  - name: cluster webhook plugin importable
+    command: /venv/bin/python
+    args: ["-c", "import alerta_prometheus_cluster"]
+    exitCode: 0
