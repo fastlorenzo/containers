@@ -5,7 +5,7 @@ FROM docker.io/alerta/alerta-web:${VERSION}
 USER root
 
 # Copy our custom Prometheus Cluster Webhook plugin into the image
-COPY webhook /tmp/alerta-prometheus-cluster-webhook
+COPY ./webhook /tmp/alerta-prometheus-cluster-webhook
 
 # Install our custom Prometheus Cluster Webhook plugin into the image
 RUN /venv/bin/pip install \
