@@ -1,7 +1,7 @@
 target "docker-metadata-action" {}
 
 variable "APP" {
-  default = "openclaw"
+  default = "alerta-web"
 }
 
 variable "VERSION" {
