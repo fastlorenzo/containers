@@ -5,7 +5,7 @@ commandTests:
   - name: poller module importable
     command: python
     args: ["-c", "import poller"]
-    env: ["PYTHONPATH=/app"]
+    envVars: ["PYTHONPATH=/app"]
     exitCode: 0
   - name: dependencies importable
     command: python
