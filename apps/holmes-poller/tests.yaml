@@ -1,0 +1,13 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/goss-org/goss/master/docs/schema.yaml
+schemaVersion: "2.0.0"
+commandTests:
+  - name: poller module importable
+    command: python
+    args: ["-c", "import poller"]
+    env: ["PYTHONPATH=/app"]
+    exitCode: 0
+  - name: dependencies importable
+    command: python
+    args: ["-c", "import requests, redis"]
+    exitCode: 0

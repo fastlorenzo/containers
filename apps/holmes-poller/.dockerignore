@@ -1,0 +1,9 @@
+# App-local override of include/.dockerignore (which the app-builder
+# workflow rsyncs into this directory with --ignore-existing, so this file
+# wins): same rules, plus the src/ sources that the Dockerfile COPYs into
+# the image.
+/*
+!defaults/
+!scripts/
+!entrypoint.sh
+!src/
