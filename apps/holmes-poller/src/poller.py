@@ -248,6 +248,11 @@ def build_prompt(env: str, incident_id: str, members: list[dict], other_alerts: 
         "chart/image version change as a suspect.",
         "(d) Propose concrete remediation steps for a human operator. You cannot make changes "
         "yourself -- writes happen only via Git PRs.",
+        "",
+        "You are running unattended: nobody can answer questions or confirm anything. Never "
+        "end with a question or a request for confirmation. If a tool call fails, try a "
+        "different approach; if data is unavailable, state the assumption you made and give "
+        "your best conclusion from the evidence you have.",
     ]
 
     if other_alerts:
