@@ -1,0 +1,20 @@
+---
+schemaVersion: "2.0.0"
+commandTests:
+  - name: script importable
+    command: python
+    args: ["-c", "import xigmanas_backup"]
+    envVars:
+      - key: PYTHONPATH
+        value: /app
+    exitCode: 0
+  - name: dependencies importable
+    command: python
+    args: ["-c", "import requests, boto3; from cryptography.hazmat.primitives.ciphers import Cipher"]
+    exitCode: 0
+  - name: fails fast with exit 2 when unconfigured
+    command: python
+    args: ["-u", "/app/xigmanas_backup.py"]
+    exitCode: 2
+metadataTest:
+  user: "65534:65534"
