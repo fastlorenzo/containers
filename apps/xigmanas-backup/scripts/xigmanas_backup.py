@@ -22,7 +22,7 @@ import re
 import sys
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from urllib.parse import urlparse
 
 EXIT_OK = 0
@@ -103,6 +103,8 @@ class Config:
     s3_secret_access_key: str | None
     s3_prefix: str
     s3_region: str | None
+    object_lock_mode: str | None
+    object_lock_retain_days: int | None
     retention_count: int
     tls_verify: bool
     ca_bundle: str | None
@@ -151,6 +153,29 @@ def load_config() -> Config:
     if prefix and not prefix.endswith("/"):
         prefix += "/"
 
+    object_lock_mode = get("OBJECT_LOCK_MODE")
+    if object_lock_mode:
+        object_lock_mode = object_lock_mode.upper()
+        if object_lock_mode not in ("GOVERNANCE", "COMPLIANCE"):
+            errors.append(
+                f"OBJECT_LOCK_MODE must be GOVERNANCE or COMPLIANCE, got {object_lock_mode!r}"
+            )
+    object_lock_retain_days: int | None = None
+    raw_lock_days = os.environ.get("OBJECT_LOCK_RETAIN_DAYS")
+    if raw_lock_days:
+        try:
+            object_lock_retain_days = int(raw_lock_days)
+            if object_lock_retain_days <= 0:
+                raise ValueError
+        except ValueError:
+            errors.append(
+                f"OBJECT_LOCK_RETAIN_DAYS must be a positive integer, got {raw_lock_days!r}"
+            )
+    if bool(object_lock_mode) != bool(object_lock_retain_days):
+        errors.append(
+            "OBJECT_LOCK_MODE and OBJECT_LOCK_RETAIN_DAYS must be set together"
+        )
+
     retention_count = 8
     raw_retention = os.environ.get("RETENTION_COUNT", "8")
     try:
@@ -193,6 +218,8 @@ def load_config() -> Config:
         s3_secret_access_key=s3_secret_access_key,
         s3_prefix=prefix,
         s3_region=get("S3_REGION"),
+        object_lock_mode=object_lock_mode,
+        object_lock_retain_days=object_lock_retain_days,
         retention_count=retention_count,
         tls_verify=tls_verify,
         ca_bundle=ca_bundle,
@@ -361,20 +388,34 @@ def make_s3(cfg: Config):
             retries={"max_attempts": 3, "mode": "standard"},
             connect_timeout=10,
             read_timeout=60,
+            # S3-compatible endpoints may reject AWS's newer default
+            # checksums; integrity is covered by the explicit Content-MD5.
+            request_checksum_calculation="when_required",
+            response_checksum_validation="when_required",
         ),
     )
 
 
 def upload(s3, cfg: Config, blob: bytes, key: str) -> str:
     digest = hashlib.sha256(blob).hexdigest()
-    try:
-        s3.put_object(
-            Bucket=cfg.s3_bucket,
-            Key=key,
-            Body=blob,
-            ContentType="application/octet-stream",
-            Metadata={"sha256": digest},
+    kwargs = {
+        "Bucket": cfg.s3_bucket,
+        "Key": key,
+        "Body": blob,
+        "ContentType": "application/octet-stream",
+        # Object-lock-enabled buckets require Content-MD5 on PUT.
+        "ContentMD5": base64.b64encode(hashlib.md5(blob).digest()).decode(),
+        "Metadata": {"sha256": digest},
+    }
+    if cfg.object_lock_mode:
+        retain_until = datetime.now(timezone.utc) + timedelta(days=cfg.object_lock_retain_days)
+        kwargs["ObjectLockMode"] = cfg.object_lock_mode
+        kwargs["ObjectLockRetainUntilDate"] = retain_until
+        log.info(
+            "applying object lock: %s until %s", cfg.object_lock_mode, retain_until.date()
         )
+    try:
+        s3.put_object(**kwargs)
     except Exception as exc:
         raise UploadError(f"put_object s3://{cfg.s3_bucket}/{key} failed: {exc}") from exc
     log.info("uploaded s3://%s/%s (%d bytes, sha256=%s)", cfg.s3_bucket, key, len(blob), digest)
@@ -399,6 +440,7 @@ def prune(s3, cfg: Config, just_uploaded_key: str) -> tuple[int, int]:
     if cfg.retention_count == 0:
         log.info("RETENTION_COUNT=0: pruning disabled")
         return 0, 0
+    deleted = 0
     try:
         objects = list_backups(s3, cfg)
         stale = [
@@ -406,15 +448,31 @@ def prune(s3, cfg: Config, just_uploaded_key: str) -> tuple[int, int]:
         ]
         for chunk_start in range(0, len(stale), 1000):
             chunk = stale[chunk_start : chunk_start + 1000]
-            s3.delete_objects(
+            resp = s3.delete_objects(
                 Bucket=cfg.s3_bucket,
                 Delete={"Objects": [{"Key": o["Key"]} for o in chunk], "Quiet": True},
             )
+            failed = {e["Key"]: e for e in resp.get("Errors", [])}
             for obj in chunk:
-                log.info("pruned s3://%s/%s (%s)", cfg.s3_bucket, obj["Key"], obj["LastModified"])
+                if obj["Key"] in failed:
+                    err = failed[obj["Key"]]
+                    # Expected on object-lock-enabled buckets while the
+                    # retention period holds; retried on a later run.
+                    log.warning(
+                        "could not prune s3://%s/%s: %s %s (still under object lock?)",
+                        cfg.s3_bucket,
+                        obj["Key"],
+                        err.get("Code"),
+                        err.get("Message"),
+                    )
+                else:
+                    deleted += 1
+                    log.info(
+                        "pruned s3://%s/%s (%s)", cfg.s3_bucket, obj["Key"], obj["LastModified"]
+                    )
     except Exception as exc:
         raise PruneError(f"pruning old backups failed: {exc}") from exc
-    return len(objects) - len(stale), len(stale)
+    return len(objects) - len(stale), deleted
 
 
 def run(cfg: Config) -> int:

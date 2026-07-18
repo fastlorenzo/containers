@@ -33,6 +33,8 @@ file (takes precedence over the plain variable).
 | `S3_SECRET_ACCESS_KEY` / `_FILE` | yes¹ | — | Secret key |
 | `S3_PREFIX` | no | `xigmanas/` | Key prefix (normalized to end with `/`) |
 | `S3_REGION` | no | — | Region, if the endpoint needs one |
+| `OBJECT_LOCK_MODE` | no | — | `GOVERNANCE` or `COMPLIANCE`: apply per-object lock retention on upload |
+| `OBJECT_LOCK_RETAIN_DAYS` | no | — | Lock duration in days; required together with `OBJECT_LOCK_MODE` |
 | `RETENTION_COUNT` | no | `8` | Newest N backups to keep; `0` disables pruning |
 | `TLS_VERIFY` | no | `true` | `false` disables NAS certificate verification (warning logged) |
 | `CA_BUNDLE` | no | — | Path to a mounted PEM bundle for the NAS certificate |
@@ -44,6 +46,22 @@ file (takes precedence over the plain variable).
 
 Pruning only ever touches keys matching `<prefix>config-*-YYYYmmddHHMMSS.gz`;
 anything else under the prefix is left alone.
+
+## Object lock / immutable buckets
+
+Uploads always send `Content-MD5`, so buckets with S3 Object Lock enabled work
+out of the box. Note that enabling lock on a bucket does **not** make new
+objects immutable by itself — either configure a *default retention policy* on
+the bucket, or set `OBJECT_LOCK_MODE` + `OBJECT_LOCK_RETAIN_DAYS` so this job
+applies per-object retention at upload (skip these if the bucket already has a
+default policy).
+
+Pruning cannot delete objects still under retention: those are logged as
+warnings, the run still succeeds, and they are pruned by a later run once the
+lock expires. With weekly backups and `RETENTION_COUNT=8`, the object being
+pruned is ~8 weeks old, so a lock duration of ≤49 days keeps count-based
+pruning timely; longer durations just delay pruning (the bucket temporarily
+holds more than N backups).
 
 ## Exit codes
 
