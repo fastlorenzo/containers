@@ -1,8 +1,6 @@
 # syntax=docker/dockerfile:1
 
-ARG TARGETARCH
-ARG ARCH=${TARGETARCH/arm64/aarch64}
-FROM ghcr.io/home-assistant/${ARCH}-base-python:3.13-alpine3.22
+FROM ghcr.io/home-assistant/base-python:3.14-alpine3.24-2026.06.1
 ARG TARGETARCH
 ARG ARCH=${TARGETARCH/arm64/aarch64}
 ARG VERSION
@@ -92,7 +90,12 @@ RUN \
     curl -fsSL "https://github.com/home-assistant/core/archive/${VERSION}.tar.gz" \
         | tar xzf - -C /tmp --strip-components=1 \
     && \
-    HOME_ASSISTANT_BASE=$(curl -fsSL "https://raw.githubusercontent.com/home-assistant/core/${VERSION}/build.yaml" | grep "${ARCH}: " | cut -d ":" -f3) \
+    HOME_ASSISTANT_BASE=$( \
+        curl -fsSL \
+        "https://raw.githubusercontent.com/home-assistant/core/${VERSION}/.github/workflows/builder.yml" \
+        | sed -n 's/^[[:space:]]*BASE_IMAGE_VERSION: "\([^"]*\)"/\1/p' \
+    ) \
+    && test -n "${HOME_ASSISTANT_BASE}" \
     && \
     uv pip install --only-binary=:all: \
         --requirement "https://raw.githubusercontent.com/home-assistant/docker/${HOME_ASSISTANT_BASE}/requirements.txt" \
