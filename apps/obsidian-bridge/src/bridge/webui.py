@@ -111,8 +111,18 @@ class WebUIClient:
     # -- knowledge collections ---------------------------------------------
 
     async def list_knowledge(self) -> list[dict[str, Any]]:
+        """List knowledge collections, tolerating both response shapes.
+
+        v0.10.2 returns {"items": [...]}, older builds a bare list. Silently
+        returning [] for the paginated shape is worse than it sounds: the
+        lookup in ensure_collection would find nothing and create a *second*
+        collection with the same name, and _resolve_kid would fail to find one
+        that plainly exists.
+        """
         response = await self._request("GET", "/api/v1/knowledge/")
         payload = response.json()
+        if isinstance(payload, dict):
+            payload = payload.get("items") or payload.get("data") or []
         return payload if isinstance(payload, list) else []
 
     async def ensure_collection(self, name: str, description: str) -> str:
