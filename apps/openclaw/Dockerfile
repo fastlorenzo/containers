@@ -16,11 +16,12 @@ RUN apt-get update && \
       vim \
     && rm -rf /var/lib/apt/lists/*
 
-# qmd memory search sidecar for OpenClaw (https://docs.openclaw.ai/concepts/memory-qmd/)
-# renovate: datasource=npm depName=@tobilu/qmd
-ARG QMD_VERSION=2.5.3
-RUN npm install -g @tobilu/qmd@${QMD_VERSION} && \
-    npm cache clean --force
+# qmd removed 2026-07-26. It only supports local GGUF inference (tobi/qmd#229,
+# #521, #620), so it ran a second embedding stack — embeddinggemma-300M, a
+# reranker and a 1.7B query-expansion model, 2.2G of weights on the PVC —
+# on CPU in a pod with no GPU. Recall now goes through the ai-box gateway's
+# Qwen3-Embedding-4B via the obsidian-bridge MCP server, so there is one
+# embedding model and one place to tune retrieval.
 
 # Obsidian Headless (ob) CLI for headless vault sync (https://obsidian.md/help/sync/headless)
 # renovate: datasource=npm depName=obsidian-headless
