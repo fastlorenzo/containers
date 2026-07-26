@@ -44,12 +44,29 @@ class WebUIClient:
     async def aclose(self) -> None:
         await self._client.aclose()
 
+    @staticmethod
+    def _is_rate_limited(response: httpx.Response) -> bool:
+        """True when the response is a rate limit, however it is dressed up.
+
+        Open WebUI embeds synchronously inside file/add and reports an upstream
+        429 from the gateway as its own **400**, e.g.
+            {"detail": "400: 429, message='Too Many Requests', url='.../embeddings'"}
+        Taking that at face value drops the note as a permanent failure, which
+        is exactly wrong: it is the one error that always deserves a retry.
+        """
+        if response.status_code == 429:
+            return True
+        if response.status_code != 400:
+            return False
+        body = response.text[:500]
+        return "429" in body or "Too Many Requests" in body
+
     async def _request(self, method: str, path: str, **kwargs: Any) -> httpx.Response:
         """Issue a request, retrying only what is worth retrying.
 
-        429 and 5xx are transient (the gateway key is rate limited at rpm 120,
-        and llama-swap may be mid model-swap). 4xx otherwise is a contract
-        problem and retrying just delays the error.
+        Rate limits and 5xx are transient (the gateway key is rate limited, and
+        llama-swap may be mid model-swap). 4xx otherwise is a contract problem
+        and retrying just delays the error.
         """
         delay = 1.0
         last_exc: Exception | None = None
@@ -65,7 +82,7 @@ class WebUIClient:
             else:
                 if response.status_code < 400:
                     return response
-                if response.status_code == 429 or response.status_code >= 500:
+                if self._is_rate_limited(response) or response.status_code >= 500:
                     if attempt == self._max_retries:
                         raise WebUIError(
                             f"{method} {path} -> {response.status_code} after "
@@ -77,7 +94,10 @@ class WebUIClient:
                         "%s %s -> %d, backing off %.1fs", method, path, response.status_code, wait
                     )
                     await asyncio.sleep(wait)
-                    delay = min(delay * 2, 30.0)
+                    # Rate limits are windowed per minute, so back off hard
+                    # enough to actually leave the window rather than nibbling
+                    # at its edge.
+                    delay = min(delay * 2, 60.0)
                     continue
                 raise WebUIError(
                     f"{method} {path} -> {response.status_code}: {response.text[:300]}"
