@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM docker.io/library/alpine:3.22
+FROM docker.io/library/alpine:3.24
 ARG VERSION
 
 ENV DELUGE_BIN="deluged" \
@@ -18,17 +18,12 @@ RUN \
         catatonit \
         coreutils \
         curl \
+        deluge=="${VERSION}" \
         jq \
         nano \
-        py3-future \
+        py3-geoip2 \
         py3-requests \
         tzdata \
-    && \
-    apk add --no-cache --repository="https://dl-cdn.alpinelinux.org/alpine/edge/community" \
-        deluge=="${VERSION}" \
-    && \
-    apk add --no-cache --repository="https://dl-cdn.alpinelinux.org/alpine/edge/testing" \
-        py3-geoip \
     && \
     mkdir -p /usr/share/GeoIP \
     && \
