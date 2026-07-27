@@ -25,7 +25,7 @@ RUN apt-get update && \
 
 # Obsidian Headless (ob) CLI for headless vault sync (https://obsidian.md/help/sync/headless)
 # renovate: datasource=npm depName=obsidian-headless
-ARG OBSIDIAN_HEADLESS_VERSION=0.0.12
+ARG OBSIDIAN_HEADLESS_VERSION=0.0.13
 RUN npm install -g obsidian-headless@${OBSIDIAN_HEADLESS_VERSION} && \
     npm cache clean --force
 
