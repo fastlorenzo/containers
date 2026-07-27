@@ -5,8 +5,8 @@ variable "APP" {
 }
 
 variable "VERSION" {
-  // renovate: datasource=repology depName=alpine_3_22/postgresql14-client versioning=loose
-  default = "14.12-r0"
+  // renovate: datasource=docker depName=docker.io/library/postgres versioning=docker
+  default = "14.23-alpine3.24"
 }
 
 variable "SOURCE" {

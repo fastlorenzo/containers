@@ -1,7 +1,6 @@
-# App-local override of include/.dockerignore (which the app-builder
-# workflow rsyncs into this directory with --ignore-existing, so this file
-# wins): same rules, plus the webhook/ plugin sources that the Dockerfile
-# COPYs into the image.
+# Standard app rules, plus the webhook/ plugin sources that the Dockerfile
+# COPYs into the image. Be careful not to ignore any files that are needed
+# in the build process.
 /*
 !defaults/
 !scripts/

@@ -12,6 +12,9 @@ ENV KOPIA_CONFIG_PATH="/config/repository.config" \
     KOPIA_CHECK_FOR_UPDATES="false" \
     RCLONE_CONFIG="/config/rclone/rclone.conf"
 
+# Kopia runs as root deliberately: it reads and restores files across arbitrary
+# bind mounts and must preserve their ownership.
+# hadolint ignore=DL3002
 USER root
 WORKDIR /app
 
@@ -23,7 +26,7 @@ RUN \
     jq \
     rclone \
     && \
-    wget https://github.com/kopia/kopia/releases/download/v${VERSION}/kopia-${VERSION}-linux-${ARCH}.tar.gz \
+    wget -q https://github.com/kopia/kopia/releases/download/v${VERSION}/kopia-${VERSION}-linux-${ARCH}.tar.gz \
     -O /tmp/kopia.tar.gz \
     && tar --strip-components=1 -xzf /tmp/kopia.tar.gz -C /bin kopia-${VERSION}-linux-${ARCH}/kopia \
     && chmod +x /bin/kopia \

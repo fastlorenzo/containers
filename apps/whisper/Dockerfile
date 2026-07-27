@@ -10,7 +10,7 @@ RUN \
         bash \
         ca-certificates \
         catatonit \
-    && pip install openai-whisper=="${VERSION}" --break-system-packages \
+    && pip install --no-cache-dir openai-whisper=="${VERSION}" --break-system-packages \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/*
 
