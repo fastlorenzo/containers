@@ -8,7 +8,7 @@
   color: 0e8a16
 - name: area/renovate
   color: 0e8a16
-- name: area/taskfile
+- name: area/tests
   color: 0e8a16
 # Semantic Types
 - name: type/digest

@@ -1,9 +1,0 @@
----
-schemaVersion: "2.0.0"
-fileExistenceTests:
-  - name: kopia
-    path: /bin/kopia
-    shouldExist: true
-  - name: sleep-script
-    path: /scripts/sleep.sh
-    shouldExist: true

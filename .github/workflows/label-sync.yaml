@@ -27,14 +27,14 @@ jobs:
           app-id: ${{ secrets.BOT_APP_ID }}
           private-key: ${{ secrets.BOT_APP_PRIVATE_KEY }}
 
-      - name: Install Task
-        uses: arduino/setup-task@c0bc642852239c2689f73f4ea6459c29405f3c52 # v3.0.0
+      - name: Setup Mise
+        uses: jdx/mise-action@f10502fc09dadecfefb962fff68ce77213930204 # v4.2.2
         with:
-          repo-token: ${{ steps.app-token.outputs.token }}
-          version: 3.x
+          experimental: true
+          install_args: --locked
 
       - name: Generate Label Config
-        run: task generate-label-config --force
+        run: mise run generate-label-config
 
       - name: Sync Labels
         uses: EndBug/label-sync@52074158190acb45f3077f9099fea818aa43f97a # v2.3.3
