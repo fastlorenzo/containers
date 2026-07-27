@@ -78,8 +78,10 @@ jobs:
           experimental: true
           install_args: --locked
 
+      # Scoped to apps/: to_migrate/ holds archived Dockerfiles that nothing
+      # builds, and their lint findings would gate every PR.
       - name: Hadolint
-        run: git ls-files -z '*Dockerfile' | xargs -0 -r hadolint
+        run: git ls-files -z 'apps/**/Dockerfile' | xargs -0 -r hadolint
 
   build:
     if: ${{ needs.prepare.outputs.changed-files != '[]' }}

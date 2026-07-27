@@ -26,6 +26,9 @@ jobs:
         with:
           app-id: ${{ secrets.BOT_APP_ID }}
           private-key: ${{ secrets.BOT_APP_PRIVATE_KEY }}
+          # The token only feeds EndBug/label-sync; label management lives under
+          # the issues permission. Scoping it satisfies zizmor's github-app audit.
+          permission-issues: write
 
       - name: Setup Mise
         uses: jdx/mise-action@f10502fc09dadecfefb962fff68ce77213930204 # v4.2.2

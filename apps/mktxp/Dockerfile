@@ -10,7 +10,7 @@ RUN \
         ca-certificates \
         catatonit \
         py3-pip \
-    && pip install mktxp=="${VERSION}" --break-system-packages \
+    && pip install --no-cache-dir mktxp=="${VERSION}" --break-system-packages \
     && chown -R root:root /usr/bin/mktxp \
     && chmod -R 755 /usr/bin/mktxp \
     && rm -rf /tmp/*

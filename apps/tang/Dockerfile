@@ -13,6 +13,8 @@
 
 FROM docker.io/library/alpine:3.22 AS build
 ARG VERSION
+# Throwaway build stage; the final image is FROM scratch and ships no shell user.
+# hadolint ignore=DL3002
 USER root
 
 RUN apk add --no-cache \
@@ -28,6 +30,9 @@ RUN apk add --no-cache \
         ninja
 
 # Build and install Tang into a staging DESTDIR.
+# WORKDIR cannot replace these: the script cds twice, into a path that only
+# exists after the tarball is unpacked.
+# hadolint ignore=DL3003
 RUN set -eux; \
     cd /tmp; \
     curl -fsSL "https://github.com/latchset/tang/archive/refs/tags/v${VERSION}.tar.gz" \
