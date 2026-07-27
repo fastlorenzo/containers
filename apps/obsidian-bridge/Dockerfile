@@ -1,6 +1,6 @@
 # Debian slim rather than Alpine: pydantic-core and the rest of the FastAPI /
 # MCP stack ship manylinux wheels, so this builds without a compiler.
-FROM docker.io/library/python:3.13-slim
+FROM docker.io/library/python:3.14-slim
 
 COPY ./requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt && rm /tmp/requirements.txt
