@@ -97,10 +97,14 @@
       allowedVersions: "/3\\.24/",
     },
     {
-      description: ["Allowed Alpine Version for Postgres Base Images"],
+      description: ["Allowed Postgres Version for Base Images"],
       matchDatasources: ["docker"],
       matchPackageNames: ["/postgres/"],
-      allowedVersions: "/alpine3\\.24/",
+      // Pins the major, not just the Alpine suffix. When postgres-init moved
+      // from the repology postgresql14-client package to the official image,
+      // only the alpine3.24 part was constrained, so Renovate proposed 18.4
+      // and automerged it. Infra here depends on the Postgres 14 client.
+      allowedVersions: "/^14\\..*-alpine3\\.24$/",
     },
     {
       description: ["Allowed Python Version for Alpine Base Images"],
