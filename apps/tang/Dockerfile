@@ -11,7 +11,7 @@
 # copied into a FROM scratch final image so it fits on constrained flash
 # (e.g. MikroTik RouterOS containers on internal NAND).
 
-FROM docker.io/library/alpine:3.22 AS build
+FROM docker.io/library/alpine:3.24 AS build
 ARG VERSION
 # Throwaway build stage; the final image is FROM scratch and ships no shell user.
 # hadolint ignore=DL3002
