@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM docker.io/library/python:3.10-slim
+FROM docker.io/library/python:3.14-slim
 ARG VERSION
 USER root
 
