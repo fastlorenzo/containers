@@ -4,13 +4,16 @@ name: Release
 
 on:
   push:
-    branches: ["main"]
-    paths: ["apps/**"]
+    branches:
+      - main
+    paths:
+      - apps/**
+      - "!apps/**/*_test.go"
   workflow_dispatch:
     inputs:
       app:
         type: string
-        description: Application Name
+        description: App Name
         required: true
       release:
         type: boolean
@@ -18,16 +21,21 @@ on:
         required: false
         default: false
 
+permissions:
+  contents: read
+
 jobs:
   prepare:
     name: Prepare
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     outputs:
       changed-files: ${{ steps.changed-files.outputs.changed_files }}
     steps:
       - name: Get Changed Files
-        id: changed-files
         uses: bjw-s-labs/action-changed-files@a9a36fb08ce06db9b02fbd8026cc2c0945eb9841 # v0.6.0
+        id: changed-files
         with:
           path: apps
           include_only_directories: true
@@ -36,8 +44,11 @@ jobs:
   changed:
     if: ${{ needs.prepare.outputs.changed-files != '[]' || github.event_name == 'workflow_dispatch' }}
     name: Get Changed Apps
-    needs: ["prepare"]
-    runs-on: ubuntu-latest
+    needs:
+      - prepare
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     outputs:
       apps: ${{ steps.apps.outputs.apps }}
     steps:
@@ -57,15 +68,20 @@ jobs:
   build:
     if: ${{ needs.changed.outputs.apps != '[]' }}
     name: Build ${{ matrix.app }}
-    needs: ["changed"]
+    needs:
+      - changed
     uses: ./.github/workflows/app-builder.yaml
     permissions:
+      artifact-metadata: write
       attestations: write
       contents: write
       id-token: write
       packages: write
       security-events: write
-    secrets: inherit
+    secrets:
+      BOT_CLIENT_ID: ${{ secrets.BOT_CLIENT_ID }}
+      BOT_APP_PRIVATE_KEY: ${{ secrets.BOT_APP_PRIVATE_KEY }}
+      DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
     strategy:
       matrix:
         app: ${{ fromJSON(needs.changed.outputs.apps) }}
@@ -78,13 +94,17 @@ jobs:
   status:
     if: ${{ !cancelled() }}
     name: Build Success
-    needs: ["build"]
-    runs-on: ubuntu-latest
+    needs:
+      - build
+    runs-on: ubuntu-24.04
+    permissions: {}
     steps:
       - name: Any jobs failed?
         if: ${{ contains(needs.*.result, 'failure') }}
-        run: exit 1
+        run: |
+          exit 1
 
       - name: All jobs passed or skipped?
         if: ${{ !(contains(needs.*.result, 'failure')) }}
-        run: echo "All jobs passed or skipped" && echo "${{ toJSON(needs.*.result) }}"
+        run: |
+          echo "All jobs passed or skipped" && echo "${{ toJSON(needs.*.result) }}"
