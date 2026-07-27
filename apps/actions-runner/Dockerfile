@@ -10,18 +10,26 @@ ENV HOMEBREW_NO_ANALYTICS=1 \
 
 USER root
 
+# build-essential/procps/file are Homebrew-on-Linux's documented requirements
+# (https://docs.brew.sh/Homebrew-on-Linux#requirements). Bare gcc is not enough:
+# `brew install homeport/tap/dyff` has no prebuilt bottle, so brew compiles it
+# from source and aborts with "No developer tools installed" without make and
+# the C headers. build-essential also pulls in libatomic1, which Node >= 24
+# links against — without it `mise install` dies on `node -v`.
 RUN \
     apt-get -qq update \
     && \
     apt-get -qq install -y --no-install-recommends --no-install-suggests \
         ca-certificates \
+        file \
         jo \
         moreutils \
+        procps \
         wget \
         zstd \
     && \
     case "${TARGETARCH}" in \
-        'amd64') apt-get -qq install -y --no-install-recommends --no-install-suggests gcc ;; \
+        'amd64') apt-get -qq install -y --no-install-recommends --no-install-suggests build-essential ;; \
     esac \
     && \
     curl -fsSL "https://github.com/mikefarah/yq/releases/latest/download/yq_linux_${TARGETARCH}" -o /usr/local/bin/yq \
