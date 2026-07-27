@@ -72,14 +72,15 @@
       semanticCommitType: "release",
     },
     {
-      description: ["Auto-merge App Updates"],
-      matchFileNames: ["**/docker-bake.hcl"],
-      automerge: true,
-      ignoreTests: false,
-    },
-    {
-      description: ["Auto-merge esphome-device-builder Updates"],
-      matchDepNames: ["esphome-device-builder"],
+      // Everything non-major, across every manager -- app versions in
+      // docker-bake.hcl, base images in Dockerfiles, GitHub Actions digests,
+      // Python and Go dependencies. ignoreTests: false means Renovate waits
+      // for CI to be green before merging.
+      //
+      // Majors are excluded here and blocked again by the last rule in this
+      // list, which wins because later packageRules override earlier ones.
+      description: ["Auto-merge non-major updates"],
+      matchUpdateTypes: ["minor", "patch", "digest", "pin", "pinDigest", "bump"],
       automerge: true,
       ignoreTests: false,
     },
@@ -126,6 +127,17 @@
       matchFileNames: ["apps/nzbhydra2/Dockerfile"],
       matchPackageNames: ["/amazoncorretto/"],
       allowedVersions: "/17-alpine3\\.24/",
+    },
+    {
+      // Majors always wait for a human. Kept last on purpose: later
+      // packageRules override earlier ones, so this beats any automerge above
+      // it no matter which manager or file matched.
+      //
+      // Previously docker-bake.hcl automerged unconditionally, which is how
+      // postgres-init shipped 14.23 -> 18.4 unreviewed in #2827.
+      description: ["Hold major updates for manual review"],
+      matchUpdateTypes: ["major"],
+      automerge: false,
     },
   ],
 }
