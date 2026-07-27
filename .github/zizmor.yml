@@ -10,3 +10,13 @@ rules:
       # from the triggering run: it only re-runs the failed jobs of a
       # push-triggered (trusted) Release run via the API. Standard secure pattern.
       - retry-release.yaml
+  github-app:
+    ignore:
+      # Renovate's token deliberately inherits the installation's permissions.
+      # It needs a wide and evolving set -- contents, pull-requests, issues,
+      # workflows, commit statuses, checks and Dependabot alerts among them --
+      # and pinning permission-* inputs is brittle: omitting statuses makes
+      # Renovate fail to set branch status, which it reports as "repository
+      # changed" and aborts the whole repo mid-run. The app is already scoped
+      # to this repository.
+      - renovate.yaml
