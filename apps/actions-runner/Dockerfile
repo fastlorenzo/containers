@@ -16,10 +16,15 @@ USER root
 # from source and aborts with "No developer tools installed" without make and
 # the C headers. build-essential also pulls in libatomic1, which Node >= 24
 # links against — without it `mise install` dies on `node -v`.
+#
+# Installed on every arch, not just amd64: an arm64 runner hits the same Node
+# libatomic failure, and gating it made the image's contents arch-dependent for
+# no benefit. Homebrew below stays amd64-only — it does not support ARM Linux.
 RUN \
     apt-get -qq update \
     && \
     apt-get -qq install -y --no-install-recommends --no-install-suggests \
+        build-essential \
         ca-certificates \
         file \
         jo \
@@ -27,10 +32,6 @@ RUN \
         procps \
         wget \
         zstd \
-    && \
-    case "${TARGETARCH}" in \
-        'amd64') apt-get -qq install -y --no-install-recommends --no-install-suggests build-essential ;; \
-    esac \
     && \
     curl -fsSL "https://github.com/mikefarah/yq/releases/latest/download/yq_linux_${TARGETARCH}" -o /usr/local/bin/yq \
         && chmod +x /usr/local/bin/yq \
