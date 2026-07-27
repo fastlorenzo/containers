@@ -51,7 +51,14 @@ jobs:
       # Ensure each app/<name> label exists in the repo. safe-settings owns
       # the static labels via the org admin repo; here we only reconcile the
       # dynamic set derived from the apps/ tree. --force makes it idempotent.
+      #
+      # Skipped on pull_request_target: this loops over every app, so it cost
+      # ~23 API calls per PR event and exhausted the app installation's hourly
+      # rate limit once a batch of Renovate PRs landed, failing Labeler on all
+      # of them. Reconciling on push/schedule is enough -- label-sync.yaml also
+      # syncs the same app/* labels daily from .github/labels.yaml.
       - name: Ensure dynamic app/* labels exist
+        if: ${{ github.event_name != 'pull_request_target' }}
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           GH_REPO: ${{ github.repository }}
