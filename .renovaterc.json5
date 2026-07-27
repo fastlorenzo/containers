@@ -60,6 +60,15 @@
     commands: [],
     fileFilters: [],
   },
+  // Renovate silently promotes rebaseWhen=auto to behind-base-branch as soon as
+  // automerge is enabled. With ~35 open PRs that serialises everything: each
+  // automerge moves main, every other branch is then "behind" and gets rebased,
+  // their CI restarts, and nothing else can merge until it goes green -- one
+  // merge per run, with a full CI sweep between each.
+  //
+  // main has no branch protection and no up-to-date-branch requirement, so a
+  // branch being behind is harmless. Rebase only on genuine conflicts.
+  rebaseWhen: "conflicted",
   packageRules: [
     {
       description: ["Release Rules for App Updates"],
