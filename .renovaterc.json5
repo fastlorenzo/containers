@@ -50,6 +50,16 @@
       transformTemplates: ['{"releases":[{"version": computer.Linux.version}]}'],
     },
   },
+  // The shared config pulls in helmPostUpgradeTasks, which runs helm-docs and
+  // helm-schema after every upgrade. This repo has no charts/ or deploy/helm/,
+  // and those commands are not on the self-hosted allowedCommands list, so each
+  // branch failed with "Artifact file update failure" -- which set a failing
+  // renovate/artifacts status and, with ignoreTests: false, blocked every
+  // automerge. Cleared because there is nothing here for them to do.
+  postUpgradeTasks: {
+    commands: [],
+    fileFilters: [],
+  },
   packageRules: [
     {
       description: ["Release Rules for App Updates"],
