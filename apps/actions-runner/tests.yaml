@@ -1,0 +1,39 @@
+---
+schemaVersion: "2.0.0"
+fileExistenceTests:
+  - name: runner binary
+    path: /home/runner/run.sh
+    shouldExist: true
+  # The whole reason this image exists — see the Dockerfile comment.
+  - name: libatomic
+    path: /usr/lib/x86_64-linux-gnu/libatomic.so.1
+    shouldExist: true
+commandTests:
+  - name: gh
+    command: gh
+    args: ["--version"]
+    exitCode: 0
+  - name: yq
+    command: yq
+    args: ["--version"]
+    exitCode: 0
+  - name: gcc
+    command: gcc
+    args: ["--version"]
+    exitCode: 0
+  - name: jq
+    command: jq
+    args: ["--version"]
+    exitCode: 0
+  - name: git
+    command: git
+    args: ["--version"]
+    exitCode: 0
+  - name: docker cli
+    command: docker
+    args: ["--version"]
+    exitCode: 0
+  - name: brew
+    command: /home/linuxbrew/.linuxbrew/bin/brew
+    args: ["--version"]
+    exitCode: 0
