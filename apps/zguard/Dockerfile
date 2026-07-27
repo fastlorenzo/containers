@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM python:3.12-slim AS builder
+FROM python:3.14-slim AS builder
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 ENV UV_COMPILE_BYTECODE=1
@@ -21,7 +21,7 @@ COPY ./app /app/
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked --no-editable
 
-FROM python:3.12-slim
+FROM python:3.14-slim
 
 # Copy the environment, but not the source code
 COPY --from=builder --chown=app:app /app/ /app/
