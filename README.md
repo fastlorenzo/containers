@@ -14,7 +14,7 @@ _An opinionated collection of container images_
 
 </div>
 
-Welcome to our container images! If you are looking for a container, start by [browsing the GitHub Packages page for this repository's packages](https://github.com/orgs/home-operations/packages?repo_name=containers).
+Welcome to our container images! If you are looking for a container, start by [browsing the GitHub Packages page for this repository's packages](https://github.com/fastlorenzo?tab=packages&repo_name=containers).
 
 ## Mission Statement
 
@@ -160,7 +160,7 @@ Containers in this repository may be deprecated for the following reasons:
 Forking this repository is straightforward. Keep the following in mind:
 
 1. **Renovate Bot**: Set up a GitHub Bot for Renovate by following the instructions [here](https://github.com/renovatebot/github-action).
-2. **Renovate Configuration**: Configuration files are located in the [`.github`](https://github.com/home-operations/.github) and [renovate-config](https://github.com/home-operations/renovate-config) repositories.
+2. **Renovate Configuration**: Repo-specific config lives in [`.renovaterc.json5`](./.renovaterc.json5); the shared presets it extends live in [renovate-presets](https://github.com/fastlorenzo/renovate-presets).
 3. **Lowercase Naming**: Ensure your GitHub username/organization and repository names are entirely lowercase to comply with GHCR requirements. Rename them or update workflows as needed.
 
 ## Credits

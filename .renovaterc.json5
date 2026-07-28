@@ -1,6 +1,20 @@
 {
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
-  extends: ["github>home-operations/renovate-config"],
+  extends: [
+    "github>fastlorenzo/renovate-presets",
+    // The preset bundle deliberately ships no automerge preset. This repo's CI
+    // only triggers on `pull_request`/`merge_group`, so branch automerge would
+    // push to main with no checks at all -- it must be PR automerge.
+    ":automergePr",
+  ],
+  // Carried over from the previous shared config, which enabled this; the
+  // preset bundle does not. Keeps go.sum refreshed monthly.
+  lockFileMaintenance: {
+    enabled: true,
+    schedule: ["before 3am on the first day of the month"],
+    commitMessageExtra: "({{manager}})",
+    additionalBranchPrefix: "{{manager}}-",
+  },
   customManagers: [
     {
       customType: "regex",
@@ -49,16 +63,6 @@
       format: "json",
       transformTemplates: ['{"releases":[{"version": computer.Linux.version}]}'],
     },
-  },
-  // The shared config pulls in helmPostUpgradeTasks, which runs helm-docs and
-  // helm-schema after every upgrade. This repo has no charts/ or deploy/helm/,
-  // and those commands are not on the self-hosted allowedCommands list, so each
-  // branch failed with "Artifact file update failure" -- which set a failing
-  // renovate/artifacts status and, with ignoreTests: false, blocked every
-  // automerge. Cleared because there is nothing here for them to do.
-  postUpgradeTasks: {
-    commands: [],
-    fileFilters: [],
   },
   // Renovate silently promotes rebaseWhen=auto to behind-base-branch as soon as
   // automerge is enabled. With ~35 open PRs that serialises everything: each
