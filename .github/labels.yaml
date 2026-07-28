@@ -19,6 +19,18 @@
   color: ff9800
 - name: type/major
   color: f6412d
+# Dependency kinds, applied by the shared renovate-presets labels policy.
+# Only the four datasources that actually occur in this repo are listed --
+# label-sync runs with delete-other-labels, so anything Renovate applies must
+# exist here or it gets pruned straight back off.
+- name: renovate/container
+  color: 5319e7
+- name: renovate/github-action
+  color: 5319e7
+- name: renovate/github-release
+  color: 5319e7
+- name: renovate/pip
+  color: 5319e7
 # Uncategorized
 - name: stale
   color: c5def5
