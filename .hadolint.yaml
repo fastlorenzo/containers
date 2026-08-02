@@ -1,6 +1,11 @@
 ---
 # yaml-language-server: $schema=https://json.schemastore.org/hadolint.json
 ignored:
+  # Images intentionally run as a named user inherited from their base image
+  # (USER apps), which hadolint 2.15 started flagging as DL3066. Enforcing
+  # numeric UIDs here would mean rewriting the USER of every app for an
+  # info-level hint, and would change file-ownership behaviour at runtime.
+  - DL3066
   - DL3018
   - DL3013
   - DL3008
