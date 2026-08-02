@@ -59,6 +59,9 @@ class Config:
     holmes_timeout: int
     max_attempts: int
     heartbeat_file: str
+    max_alerts_per_incident: int
+    max_context_alerts: int
+    retry_marked_after: int
 
 
 def load_config() -> Config:
@@ -89,6 +92,20 @@ def load_config() -> Config:
         holmes_timeout=int(os.environ.get("HOLMES_TIMEOUT", "300")),
         max_attempts=int(os.environ.get("MAX_ATTEMPTS", "3")),
         heartbeat_file=os.environ.get("HEARTBEAT_FILE", "/tmp/poller-heartbeat"),
+        # An incident is one prompt and one investigation, so its size decides
+        # how long Holmes runs. Batching stays useful (related alerts share a
+        # root cause), but unbounded batching is what turns a backlog into a
+        # single enormous prompt whose later iterations crawl and eventually
+        # blow HOLMES_TIMEOUT. Alerts beyond the cap keep their place in the
+        # queue and are picked up by a following cycle.
+        max_alerts_per_incident=int(os.environ.get("MAX_ALERTS_PER_INCIDENT", "5")),
+        max_context_alerts=int(os.environ.get("MAX_CONTEXT_ALERTS", "20")),
+        # How long a `failed` / `skipped-budget` mark suppresses an alert
+        # before it becomes investigable again. Those marks record a transient
+        # condition (Holmes down, gateway overloaded, budget spent for the
+        # day), not a property of the alert, so they must not be permanent.
+        # 0 disables expiry and restores the old sticky behaviour.
+        retry_marked_after=int(os.environ.get("RETRY_MARKED_AFTER", "21600")),
     )
 
 
@@ -112,6 +129,10 @@ def severity_rank(severity: str) -> int:
         return len(_SEVERITY_ORDER) - _SEVERITY_ORDER.index(severity)
     except ValueError:
         return 0
+
+
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 # --------------------------------------------------------------------------
@@ -181,20 +202,46 @@ def post_slack(session: requests.Session, webhook_url: str, text: str) -> None:
 # --------------------------------------------------------------------------
 
 
+def _cooldown_key(env: str, event: str, resource: str) -> str:
+    return f"holmes:cooldown:{env}:{event}:{resource}"
+
+
+def in_cooldown(r: "redis.Redis", env: str, event: str, resource: str) -> bool:
+    """Non-destructive cooldown check, for filtering before an incident is built."""
+    return bool(r.exists(_cooldown_key(env, event, resource)))
+
+
 def acquire_cooldown(
     r: "redis.Redis", env: str, event: str, resource: str, cooldown_seconds: int
 ) -> bool:
     """Return True if the cooldown was acquired (i.e. the alert may proceed)."""
-    key = f"holmes:cooldown:{env}:{event}:{resource}"
-    return bool(r.set(key, "1", nx=True, ex=cooldown_seconds))
+    return bool(r.set(_cooldown_key(env, event, resource), "1", nx=True, ex=cooldown_seconds))
 
 
-def increment_daily_budget(r: "redis.Redis") -> int:
-    date_key = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    key = f"holmes:trigger-count:{date_key}"
-    count = r.incr(key)
+def _budget_key() -> str:
+    return f"holmes:trigger-count:{datetime.now(timezone.utc).strftime('%Y-%m-%d')}"
+
+
+def get_daily_budget_spent(r: "redis.Redis") -> int:
+    """Investigations charged to today's budget so far."""
+    try:
+        return int(r.get(_budget_key()) or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
+def charge_daily_budget(r: "redis.Redis") -> int:
+    """Charge one investigation against today's budget and return the new total.
+
+    Charged only once Holmes has actually produced an analysis. Charging on
+    attempt instead lets a systematically failing pipeline (Holmes down, a
+    liveness probe killing the poller mid-call, a gateway rejecting the
+    request) exhaust the daily cap without a single RCA ever being produced,
+    which then suppresses every remaining alert for the rest of the day.
+    """
+    count = r.incr(_budget_key())
     if count == 1:
-        r.expire(key, 90000)
+        r.expire(_budget_key(), 90000)
     return count
 
 
@@ -203,15 +250,92 @@ def increment_daily_budget(r: "redis.Redis") -> int:
 # --------------------------------------------------------------------------
 
 
-def is_eligible(alert: dict[str, Any], severities: set[str]) -> bool:
+# Marks that record a transient failure rather than a completed investigation.
+# They suppress an alert only for RETRY_MARKED_AFTER seconds; "true" is final.
+_TRANSIENT_MARKS = ("failed", "skipped-budget")
+
+
+def _parse_iso(value: str) -> datetime | None:
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except (AttributeError, TypeError, ValueError):
+        return None
+    return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+
+
+def mark_has_expired(attributes: dict[str, Any], retry_marked_after: int) -> bool:
+    """True if a transient mark is old enough that the alert may be retried.
+
+    A mark without a readable timestamp is treated as expired: it predates
+    this bookkeeping, and leaving such alerts suppressed forever is exactly
+    the failure mode this replaces.
+    """
+    if retry_marked_after <= 0:
+        return False
+    if attributes.get("holmesInvestigated") not in _TRANSIENT_MARKS:
+        return False
+    marked_at = _parse_iso(attributes.get("holmesMarkedAt", ""))
+    if marked_at is None:
+        return True
+    return (datetime.now(timezone.utc) - marked_at).total_seconds() >= retry_marked_after
+
+
+def is_eligible(alert: dict[str, Any], cfg: Config) -> bool:
     environment = alert.get("environment", "")
     if env_endpoints(environment) is None:
         return False
-    if alert.get("severity") not in severities:
+    if alert.get("severity") not in cfg.severities:
         return False
-    if alert.get("attributes", {}).get("holmesInvestigated"):
-        return False
+    attributes = alert.get("attributes", {}) or {}
+    if attributes.get("holmesInvestigated"):
+        return mark_has_expired(attributes, cfg.retry_marked_after)
     return True
+
+
+def clear_expired_mark(
+    session: requests.Session, cfg: Config, alert: dict[str, Any]
+) -> None:
+    """Drop an expired transient mark so the alert starts from a clean slate.
+
+    Also zeroes holmesAttempts: the attempts that produced the mark were spent
+    on a condition that has since had time to clear, so they should not count
+    against the next round of retries.
+    """
+    attributes = alert.get("attributes", {}) or {}
+    previous_mark = attributes.get("holmesInvestigated")
+    if not previous_mark:
+        return
+    cleared = {"holmesInvestigated": "", "holmesMarkedAt": "", "holmesAttempts": "0"}
+    try:
+        put_alert_attributes(session, cfg, alert["id"], cleared)
+    except requests.RequestException as exc:
+        LOG.error("failed to clear expired mark on alert %s: %s", alert["id"], exc)
+        return
+    attributes.update(cleared)
+    alert["attributes"] = attributes
+    LOG.info(
+        "retrying alert previously marked %r: env=%s event=%s resource=%s",
+        previous_mark,
+        alert.get("environment", ""),
+        alert.get("event", ""),
+        alert.get("resource", ""),
+    )
+
+
+def select_incident_members(alerts: list[dict], limit: int) -> tuple[list[dict], list[dict]]:
+    """Split an environment's candidates into this incident's members and the rest.
+
+    Most severe first, oldest first within a severity, so that a capped
+    incident investigates the worst of what is currently firing and the
+    remainder simply waits for a later cycle.
+    """
+    ordered = sorted(
+        alerts,
+        key=lambda a: (-severity_rank(a.get("severity", "")), a.get("firstReceiveTime", "")),
+    )
+    if limit <= 0:
+        return ordered, []
+    return ordered[:limit], ordered[limit:]
 
 
 def build_prompt(env: str, incident_id: str, members: list[dict], other_alerts: list[dict]) -> str:
@@ -306,7 +430,11 @@ def record_attempt_failure(
         attempts = current + 1
         attributes = {"holmesAttempts": str(attempts)}
         if attempts >= cfg.max_attempts:
+            # Suppress the alert, but stamp when — mark_has_expired() lets it
+            # back in after RETRY_MARKED_AFTER so a transient outage cannot
+            # disqualify an alert permanently.
             attributes["holmesInvestigated"] = "failed"
+            attributes["holmesMarkedAt"] = _now_iso()
         try:
             put_alert_attributes(session, cfg, alert["id"], attributes)
         except requests.RequestException as exc:
@@ -328,19 +456,22 @@ def process_incident(
 ) -> None:
     incident_id = f"{env}-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}"
 
-    budget_count = increment_daily_budget(r)
-    if budget_count > cfg.daily_budget:
+    budget_spent = get_daily_budget_spent(r)
+    if budget_spent >= cfg.daily_budget:
         LOG.warning(
-            "incident %s: daily budget exceeded (%d/%d), skipping %d alert(s)",
+            "incident %s: daily budget exhausted (%d/%d), skipping %d alert(s)",
             incident_id,
-            budget_count,
+            budget_spent,
             cfg.daily_budget,
             len(members),
         )
         for alert in members:
             try:
                 put_alert_attributes(
-                    session, cfg, alert["id"], {"holmesInvestigated": "skipped-budget"}
+                    session,
+                    cfg,
+                    alert["id"],
+                    {"holmesInvestigated": "skipped-budget", "holmesMarkedAt": _now_iso()},
                 )
             except requests.RequestException as exc:
                 LOG.error(
@@ -366,7 +497,10 @@ def process_incident(
         record_attempt_failure(session, cfg, members, incident_id)
         return
 
-    now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    # Holmes produced an analysis, so the LLM spend happened: charge it now.
+    budget_count = charge_daily_budget(r)
+
+    now_iso = _now_iso()
     for alert in members:
         try:
             put_alert_attributes(
@@ -392,9 +526,15 @@ def process_incident(
     try:
         post_slack(session, slack_webhook, slack_text)
     except requests.RequestException as exc:
-        LOG.error("incident %s: slack post failed: %s", incident_id, exc)
-        record_attempt_failure(session, cfg, members, incident_id)
-        return
+        # The investigation itself succeeded and the RCA is already stored on
+        # the alerts, so this is a delivery failure only. Recording it as an
+        # attempt failure would overwrite that successful mark and eventually
+        # re-run a whole investigation because a webhook was down.
+        LOG.error(
+            "incident %s: slack post failed, RCA is still on the alerts in Alerta: %s",
+            incident_id,
+            exc,
+        )
 
     LOG.info(
         "incident %s: triggered investigation for %d alert(s) in env %s (budget %d/%d)",
@@ -415,38 +555,64 @@ def run_cycle(session: requests.Session, r: "redis.Redis", cfg: Config, poll_cou
     alerts = get_open_alerts(session, cfg)
     LOG.info("poll %d: fetched %d open alert(s)", poll_count, len(alerts))
 
-    eligible = [a for a in alerts if is_eligible(a, cfg.severities)]
+    for alert in alerts:
+        if mark_has_expired(alert.get("attributes", {}) or {}, cfg.retry_marked_after):
+            clear_expired_mark(session, cfg, alert)
+
+    eligible = [a for a in alerts if is_eligible(a, cfg)]
     LOG.info("poll %d: %d alert(s) eligible for investigation", poll_count, len(eligible))
-
-    survivors = []
-    for alert in eligible:
-        env = alert.get("environment", "")
-        event = alert.get("event", "")
-        resource = alert.get("resource", "")
-        if acquire_cooldown(r, env, event, resource, cfg.cooldown_seconds):
-            survivors.append(alert)
-        else:
-            LOG.info(
-                "poll %d: skip (cooldown) env=%s event=%s resource=%s",
-                poll_count,
-                env,
-                event,
-                resource,
-            )
-
-    if not survivors:
+    if not eligible:
         return
 
     by_env: dict[str, list[dict]] = {}
-    for alert in survivors:
+    for alert in eligible:
         by_env.setdefault(alert.get("environment", ""), []).append(alert)
 
-    for env, members in by_env.items():
-        member_ids = {m["id"] for m in members}
+    for env, candidates in by_env.items():
+        ready = [
+            a
+            for a in candidates
+            if not in_cooldown(r, env, a.get("event", ""), a.get("resource", ""))
+        ]
+        if len(ready) < len(candidates):
+            LOG.info(
+                "poll %d: env=%s %d alert(s) still in cooldown",
+                poll_count,
+                env,
+                len(candidates) - len(ready),
+            )
+        if not ready:
+            continue
+
+        members, deferred = select_incident_members(ready, cfg.max_alerts_per_incident)
+        if deferred:
+            LOG.info(
+                "poll %d: env=%s incident capped at %d alert(s), %d deferred to a later cycle",
+                poll_count,
+                env,
+                len(members),
+                len(deferred),
+            )
+
+        # Claim the cooldown only for the alerts this incident actually
+        # investigates — deferred ones must stay free to be picked up next
+        # cycle rather than sitting out a full cooldown for a batch they
+        # were never part of.
+        claimed = [
+            a
+            for a in members
+            if acquire_cooldown(
+                r, env, a.get("event", ""), a.get("resource", ""), cfg.cooldown_seconds
+            )
+        ]
+        if not claimed:
+            continue
+
+        member_ids = {m["id"] for m in claimed}
         other_alerts = [
             a for a in alerts if a.get("environment") == env and a["id"] not in member_ids
-        ][:20]
-        process_incident(session, r, cfg, env, members, other_alerts)
+        ][: cfg.max_context_alerts]
+        process_incident(session, r, cfg, env, claimed, other_alerts)
 
 
 def _request_shutdown(signum: int, frame: Any) -> None:
@@ -482,10 +648,14 @@ def main() -> None:
     r = redis.Redis.from_url(cfg.redis_url, decode_responses=True)
 
     LOG.info(
-        "holmes-poller starting: poll_interval=%ds daily_budget=%d cooldown=%ds severities=%s",
+        "holmes-poller starting: poll_interval=%ds daily_budget=%d cooldown=%ds "
+        "max_alerts_per_incident=%d holmes_timeout=%ds retry_marked_after=%ds severities=%s",
         cfg.poll_interval,
         cfg.daily_budget,
         cfg.cooldown_seconds,
+        cfg.max_alerts_per_incident,
+        cfg.holmes_timeout,
+        cfg.retry_marked_after,
         ",".join(sorted(cfg.severities)),
     )
 
