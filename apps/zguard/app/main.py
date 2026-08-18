@@ -3,7 +3,7 @@
 import os
 import ipaddress
 import time
-from urllib.parse import urlparse
+from urllib.parse import urlencode, urlparse
 
 from fastapi import FastAPI, Request, Response, HTTPException
 from fastapi.responses import RedirectResponse
@@ -119,3 +119,28 @@ def healthz():
         return {"ok": True, "time": int(time.time())}
     except Exception as e:
         raise HTTPException(500, str(e)) from e
+
+
+@app.get("/{full_path:path}")
+def check_ext_authz(request: Request, full_path: str):
+    """
+    Catch-all for the Istio ext-authz flow. The gateway forwards the original
+    request path here; on deny, redirect to /allow so the user can sign in
+    (instead of the bare 401 the nginx auth-url expects from /check).
+    """
+    ip = get_client_ip(request)
+    if r.get(f"whitelist:{ip}"):
+        r.expire(f"whitelist:{ip}", TTL_SECONDS)
+        return Response(status_code=200)
+
+    # Original URL, provided by the gateway via
+    # includeAdditionalHeadersInCheck: X-Auth-Request-Redirect.
+    rd = request.headers.get("x-auth-request-redirect")
+    if not rd:
+        host = request.headers.get("host", "")
+        rd = f"https://{host}/" if not full_path else f"https://{host}/{full_path}"
+
+    signin = f"https://zguard.{AUTHORIZED_DOMAIN}/allow"
+    if rd:
+        signin += f"?{urlencode({'rd': rd})}"
+    return RedirectResponse(url=signin, status_code=302)
