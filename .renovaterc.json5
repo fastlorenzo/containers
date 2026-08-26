@@ -153,10 +153,10 @@
       automerge: false,
     },
     {
-      // llama-swap-strix compiles llama.cpp at a pinned release tag and grafts
-      // the result onto the stock llama-swap image built from THAT SAME
-      // llama.cpp build. Its whole purpose is a one-variable A/B against that
-      // base, so VERSION and BASE_IMAGE have to move together. Renovate would
+      // llama-swap-strix compiles llama.cpp at a pinned repo+ref (upstream tag
+      // or fork commit) and grafts the result onto the stock llama-swap image.
+      // Its whole purpose is a one-variable A/B against that base, so
+      // LLAMA_REPO/LLAMA_REF and BASE_IMAGE have to move deliberately. Renovate would
       // bump the base image digest on its own and automerge it (digest updates
       // automerge), leaving a patched llama.cpp grafted onto a different
       // llama.cpp -- which still builds, still runs, and quietly invalidates

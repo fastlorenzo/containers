@@ -1,0 +1,9 @@
+# Out-of-tree llama.cpp patches applied on top of LLAMA_REPO@LLAMA_REF.
+#
+# Empty is the normal state when building a fork that already carries its
+# changes. Drop *.patch files here to stack more on top; the build applies them
+# in filename order and fails loudly on conflict.
+#
+# Retired 2026-08-26: 25494-vulkan-coopmat1-q8_0-kv-dequant.patch — merged
+# upstream 2026-08-19 (ggml-org/llama.cpp#25494) and therefore already present
+# in any base newer than that.

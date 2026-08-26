@@ -1,6 +1,10 @@
 # syntax=docker/dockerfile:1
 #
-# llama-swap with a patched llama.cpp for Strix Halo (gfx1151) — see README.md.
+# llama-swap with a custom llama.cpp build for Strix Halo (gfx1151) — see README.md.
+#
+# LLAMA_REPO/LLAMA_REF select what gets compiled: upstream at a bNNNNN tag, or a
+# fork at a pinned commit. Everything else — flags, graft, layout — is identical
+# either way, which is what keeps an A/B down to one variable.
 #
 # The build stages are a deliberate COPY of ggml-org/llama.cpp's own
 # .devops/vulkan.Dockerfile (same ubuntu base, same package list, same cmake
@@ -22,6 +26,11 @@ ARG UBUNTU_VERSION=26.04
 ARG NODE_VERSION=24
 ARG VERSION
 ARG BASE_IMAGE
+ARG LLAMA_REPO=https://github.com/ggml-org/llama.cpp.git
+# Tag (bNNNNN) or full 40-char commit SHA. A SHA is mandatory for anything that
+# is not an immutable upstream tag: a moving branch silently invalidates every
+# benchmark taken against it.
+ARG LLAMA_REF
 
 # ── Web UI ────────────────────────────────────────────────────────────
 # llama-server embeds tools/ui/dist at compile time and that directory is a
@@ -31,10 +40,15 @@ ARG BASE_IMAGE
 FROM docker.io/node:${NODE_VERSION} AS web
 
 ARG VERSION
+ARG LLAMA_REPO
+ARG LLAMA_REF
 
 WORKDIR /src
-RUN git clone --depth 1 --branch "${VERSION}" \
-    https://github.com/ggml-org/llama.cpp.git .
+RUN git init -q . \
+    && git remote add origin "${LLAMA_REPO}" \
+    && git fetch --depth 1 -q origin "${LLAMA_REF}" \
+    && git checkout -q FETCH_HEAD \
+    && git log -1 --format='%H %cI %s' | tee /llama-source.txt
 
 WORKDIR /src/tools/ui
 RUN npm ci && LLAMA_BUILD_NUMBER="${VERSION#b}" npm run build
@@ -52,21 +66,34 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libvulkan-dev glslc spirv-headers \
     && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /src
-RUN git clone --depth 1 --branch "${VERSION}" \
-    https://github.com/ggml-org/llama.cpp.git .
+ARG LLAMA_REPO
+ARG LLAMA_REF
 
-# --verbose so the build log records which hunks moved: these are out-of-tree
-# patches against a moving base, so applying with offsets is expected and fine.
-# A real conflict fails the build here rather than quietly shipping an
-# unpatched image that benchmarks as a null result.
+WORKDIR /src
+RUN git init -q . \
+    && git remote add origin "${LLAMA_REPO}" \
+    && git fetch --depth 1 -q origin "${LLAMA_REF}" \
+    && git checkout -q FETCH_HEAD \
+    && git log -1 --format='%H %cI %s' | tee /llama-source.txt
+
+# Out-of-tree patches, if any. --verbose so the build log records which hunks
+# moved: these apply against a moving base, so offsets are expected and fine. A
+# real conflict fails the build here rather than quietly shipping an unpatched
+# image that benchmarks as a null result.
+#
+# An EMPTY patches/ is a legitimate state — building a fork needs no patches —
+# so the loop tolerates no matches, but only that. Anything that is present and
+# does not apply still fails the build.
 COPY patches/ /patches/
 RUN set -eux; \
     for p in /patches/*.patch; do \
+        [ -e "$p" ] || continue; \
         echo "=== applying $(basename "$p")"; \
         git apply --verbose "$p"; \
     done; \
-    git diff --stat | tee /patches-applied.txt
+    git diff --stat > /patches-applied.txt; \
+    cat /llama-source.txt >> /patches-applied.txt; \
+    cat /patches-applied.txt
 
 COPY --from=web /src/tools/ui/dist tools/ui/dist
 
@@ -96,5 +123,6 @@ RUN test -f /app/llama-server && test -f /app/llama-swap \
 COPY --from=build --chown=10001:10001 /out/lib/ /app/
 COPY --from=build --chown=10001:10001 /out/llama-server /app/llama-server
 COPY --from=build --chown=10001:10001 /patches-applied.txt /app/patches-applied.txt
+COPY --from=build --chown=10001:10001 /llama-source.txt /app/llama-source.txt
 
 USER 10001:10001

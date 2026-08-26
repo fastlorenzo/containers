@@ -1,42 +1,49 @@
 # llama-swap-strix
 
-`llama-swap` with an out-of-tree llama.cpp patch for **Strix Halo / gfx1151**,
-built for exactly one machine: `ai-box` (Framework Desktop, Ryzen AI Max+ 395,
-122 GiB unified memory, Vulkan/RADV backend). It is not a general-purpose image.
+`llama-swap` with a custom llama.cpp build for **Strix Halo / gfx1151**, built
+for exactly one machine: `ai-box` (Framework Desktop, Ryzen AI Max+ 395, 122 GiB
+unified memory, Vulkan/RADV backend). It is not a general-purpose image.
 
-## What it carries
+## What it currently carries
 
-**ggml-org/llama.cpp[#25494](https://github.com/ggml-org/llama.cpp/pull/25494)**
-— *"vulkan: dequant q8_0 KV once in coopmat1"*, open upstream as of 2026-08.
-The Vulkan coopmat1 flash-attention path dequantises the q8_0 KV cache once per
-workgroup (32×); the patch does it once into scratch, in per-head-contiguous
-form, so the memory-bound read at prefill is cheaper.
+[**LaurentZuijdwijk/llama.cpp**](https://github.com/LaurentZuijdwijk/llama.cpp)
+`c28d538d` (2026-08-25), a fork whose upstream merge base is ggml-org
+`95b8e33e1` (2026-08-23). Vulkan-only work, tested by its author on a Radeon
+8060S with Mesa RADV 26.0.8 — the same GPU and driver ai-box runs.
 
-That matters here because **every generative route on ai-box runs `kv: q8_0`
-with `-fa 1`**, which is precisely the configuration the patch targets. Author's
-measurements on a Qwen3-MoE-30B-A3B with q8_0 KV — essentially ai-box's `coder`
-route:
+| Change                                       | Author's claim                      |
+| -------------------------------------------- | ----------------------------------- |
+| LDS stride bank-conflict fix (**RADV only**) | +7–14% across devices               |
+| Tiled concat-transpose for MoE               | +45% on Ornith                      |
+| IQ3_S register-spill elimination             | 5.4× at batch 8                     |
+| Dense prefill                                | +13.0% @ depth 0 → +4.6% @64K       |
+| MoE prefill, Ornith-35B-A3B, **ubatch 2048** | pp2048 1648.5 vs 870.5 t/s mainline |
+| MoE generation                               | parity                              |
 
-| | pp512 @32k | pp512 @65k | tg32 @32k | tg32 @65k |
-|---|---|---|---|---|
-| stock | 200.2 t/s | 99.1 t/s | 36.71 | 26.27 |
-| patched | **282.0 t/s** | **166.2 t/s** | 36.73 | 27.50 |
+Why this is interesting for ai-box specifically: the fork's MoE benchmark model
+_is_ the `coder` route (Ornith-35B-A3B), the LDS fix is RADV-only and ai-box is
+RADV, and ai-box's heaviest consumers (HolmesGPT, OpenClaw resending 50–130k
+token transcripts) are **prefill-bound** — which is where these changes claim
+their wins.
 
-Greedy output is reported byte-identical; the cost is a scratch buffer that
-scales with KV size (~268 MB @128k), which is why the on-box A/B watches GTT
-peak and not only tokens/s.
+The fork also adds adaptive speculative decoding (`--spec-draft-adaptive`,
+`--spec-type draft-dflash`) and ROCmFPx quantisation. Those need different
+weights and a draft model, are a separate and much larger experiment, and are
+**not** what this image is being evaluated for. `--spec-type draft-mtp` still
+works, so ai-box's existing routes graft over unchanged.
 
-The PR's `tests/test-backend-ops.cpp` hunk is **not** vendored: it does not
-apply to b10331 (the surrounding flash-attention test block moved) and the image
-builds with `LLAMA_BUILD_TESTS=OFF`. Everything under `ggml/` — the actual
-runtime change — applies with offsets.
+⚠ **`-ub 2048` can hang this GPU.** The fork's own README: _"on this hardware,
+`-ub 2048` with a context depth at or beyond 65536 reproducibly times out the
+compute ring."_ The headline MoE prefill number requires exactly that. ai-box
+runs `coder` at 262144 ctx and has livelocked twice on memory pressure already,
+so bench `-ub 2048` at shallow depth only and never configure it on a route
+above 64k.
 
 ## How it is built
 
 Two build stages reproduce upstream's own `.devops/vulkan.Dockerfile` (same
 Ubuntu base, package list and cmake flags, plus the web UI stage llama-server
-embeds at compile time), with `patches/*.patch` applied to the checked out
-release tag first. The final stage then **grafts** the result onto the stock
+embeds at compile time). The final stage **grafts** the result onto the stock
 llama-swap image ai-box already runs, replacing only `/app/llama-server` and the
 ggml backend shared objects.
 
@@ -44,34 +51,50 @@ The graft is what makes this useful: llama-swap, the entrypoint, the runtime
 libraries and every path stay byte-identical to production, so benchmarking this
 image against `BASE_IMAGE` changes one variable.
 
-⚠ **`VERSION` and `BASE_IMAGE` move together or not at all.** `VERSION` is the
-llama.cpp release tag to compile; `BASE_IMAGE` must be the llama-swap image
-built from that same llama.cpp build. Bumping one alone silently turns the A/B
-into "patch + version bump vs stock" and the numbers stop meaning anything.
-Renovate is disabled for this app (see `.renovaterc.json5`) for that reason —
-updates here are manual and deliberate.
+`LLAMA_REPO` / `LLAMA_REF` select what gets compiled — upstream at a `bNNNNN`
+tag, or a fork at a pinned commit. `VERSION` is only a build label.
 
-⚠ The patched Vulkan code lives in `libggml-vulkan.so`, **not** in the
+⚠ **`LLAMA_REF` must be an immutable ref.** A branch name silently invalidates
+every benchmark taken against it. Renovate is disabled for this app
+(`.renovaterc.json5`) for the same reason — updates are manual and deliberate.
+
+⚠ The Vulkan kernel code lives in `libggml-vulkan.so`, **not** in the
 `llama-server` binary. An image with only the binary replaced runs perfectly and
-benchmarks exactly like stock — which reads as "the patch does nothing" rather
-than as a build error. `container_test.go` asserts the libraries are there.
+benchmarks exactly like stock — which reads as "the build does nothing" rather
+than as a build error. `container_test.go` asserts the libraries are there, and
+that the binary really is the fork (`--spec-draft-adaptive` is fork-only).
+
+### Isolating the fork from upstream drift
+
+ai-box runs b10331 (2026-08-08); the fork's base is 2026-08-23. A plain A/B
+therefore measures _the fork plus three weeks of upstream commits_. To separate
+them, build the extra target and bench three ways:
+
+```
+docker buildx bake image-upstream-base   # upstream @ 95b8e33e1, grafted identically
+```
+
+`stock b10331` vs `up-95b8e33e` vs `lz-c28d538d`.
 
 ## Using it
 
-Consumed by `ai-box` via `aibox_images.llama_swap_patched` (digest-pinned, in
-`k8s-home/ansible/group_vars/ai_box/main.yml` of the infra repo). It is wired in
-as an extra **benchmark backend** first, not as the serving image:
+Consumed by ai-box via `aibox_llama_patched_image` (digest-pinned, top-level in
+`k8s-home/ansible/group_vars/ai_box/main.yml`). It is wired in as an extra
+**benchmark backend** first, not as the serving image — while that variable is
+empty the whole thing is inert:
 
 ```
 ai-bench sweep coder-fa-patch    # backend dim: vulkan vs vulkan-patched
 ```
 
-Promote it to `aibox_images.llama_swap` only if it wins prompt processing at
-two or more depths, does not regress token generation, and leaves GTT headroom
-for the largest resident tier.
+Promote to `aibox_images.llama_swap` only if it wins prompt processing at two or
+more depths, does not regress token generation, and leaves GTT headroom for the
+largest resident tier.
 
-## Retire it when the PR merges
+## History
 
-This image exists only because #25494 is unmerged. Once it lands in an upstream
-llama.cpp release, point ai-box back at the stock `mostlygeek/llama-swap` image
-and delete this app.
+Originally built to carry ggml-org/llama.cpp#25494 (_"vulkan: dequant q8_0 KV
+once in coopmat1"_) while it was unmerged. **That PR merged upstream
+2026-08-19**, so the patch was retired and `patches/` is now empty — any base
+newer than that date already includes it, this fork included. The app was kept
+rather than deleted because the graft-and-A/B machinery is the reusable part.
