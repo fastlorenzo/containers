@@ -271,9 +271,8 @@ checksum = "sha256:c358e4c9bd4cd1a4521fa2ae140c88637a3679fc3e99cd1aa6bca1ec5131f
 url = "https://nodejs.org/dist/v26.8.0/node-v26.8.0-linux-arm64.tar.gz"
 
 [tools.node."platforms.linux-arm64-musl"]
-checksum = "sha256:eee6bf1301f4e779998987a2ef4727d7043ec20e14594d0f495bd1caa41816b7"
-url = "https://nodejs.org/dist/v26.8.0/node-v26.8.0.tar.gz"
-install = "source"
+checksum = "sha256:ec56d752fe301436a04cef093cb55d467dc7bbc2c1f2ef6aff6f23467d058fea"
+url = "https://unofficial-builds.nodejs.org/download/release/v26.8.0/node-v26.8.0-linux-arm64-musl.tar.gz"
 
 [tools.node."platforms.linux-x64"]
 checksum = "sha256:32fcdc8e2e2cc54fbcd6c8cc96ca5bd2e70019ac23000cbd6ccc5663de111b33"
