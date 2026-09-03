@@ -6,7 +6,7 @@ variable "APP" {
 
 variable "VERSION" {
   // renovate: datasource=docker depName=ghcr.io/openclaw/openclaw
-  default = "2026.8.2"
+  default = "2026.9.1"
 }
 
 variable "SOURCE" {
