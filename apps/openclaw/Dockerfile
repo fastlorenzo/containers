@@ -29,4 +29,15 @@ ARG OBSIDIAN_HEADLESS_VERSION=0.0.14
 RUN npm install -g obsidian-headless@${OBSIDIAN_HEADLESS_VERSION} && \
     npm cache clean --force
 
+# Since the 2026.8.x upstream base (Node 24 / npm 12) the global install no
+# longer runs better-sqlite3's install script, so obsidian-headless shipped
+# without its native binding and `ob sync` died with "Could not locate the
+# bindings file" (2026-09-04). Fetch the prebuilt binary explicitly (fall back
+# to a source build) and fail the image build if the module cannot load.
+WORKDIR /usr/local/lib/node_modules/obsidian-headless/node_modules/better-sqlite3
+RUN (npx --no-install prebuild-install || npm run build-release) && \
+    node -e "new (require('/usr/local/lib/node_modules/obsidian-headless/node_modules/better-sqlite3'))(':memory:').close()" && \
+    rm -rf /root/.npm /tmp/*
+WORKDIR /app
+
 USER node
