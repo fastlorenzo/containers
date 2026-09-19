@@ -121,11 +121,17 @@ def healthz():
         raise HTTPException(500, str(e)) from e
 
 
-@app.get("/{full_path:path}")
+@app.api_route(
+    "/{full_path:path}",
+    methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
+)
 def check_ext_authz(request: Request, full_path: str):
     """
     Catch-all for the Istio ext-authz flow. The gateway forwards the original
-    request path here; on deny, redirect to /allow so the user can sign in
+    request method and path here (envoyExtAuthzHttp keeps both), so every
+    method must be accepted: a GET-only route made FastAPI answer 405 to any
+    POST/PUT/DELETE and Envoy relayed that as a deny to the client.
+    On deny, redirect to /allow so the user can sign in
     (instead of the bare 401 the nginx auth-url expects from /check).
     """
     ip = get_client_ip(request)

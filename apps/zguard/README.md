@@ -40,6 +40,14 @@ Remove the client IP from the whitelist.
 - **Auth**: Must be behind OIDC authentication
 - **Usage**: Allow users to revoke their own access
 
+### `ANY /{path}` (Istio ext-authz catch-all)
+
+The Istio `envoyExtAuthzHttp` provider forwards the original method and path of
+every request, so this route accepts all methods. Returns 200 when the client IP
+is whitelisted, otherwise 302 to `https://zguard.<AUTHORIZED_DOMAIN>/allow?rd=<original url>`.
+A GET-only catch-all would make FastAPI answer 405 to every POST, which Envoy
+relays to the client as a deny.
+
 ### `GET /healthz`
 
 Health check endpoint.
