@@ -84,7 +84,7 @@ jobs:
           )
         )
       )
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       # Token deliberately inherits the installation's permissions; see the
       # github-app exemption in .github/zizmor.yml for why.
