@@ -29,7 +29,9 @@ RUN \
         file \
         jo \
         moreutils \
+        postgresql-client \
         procps \
+        python3 \
         wget \
         zstd \
     && \
@@ -47,7 +49,28 @@ RUN \
 
 USER runner
 
+# rustup with no toolchain: each job installs whatever its rust-toolchain.toml
+# pins (`rustup show active-toolchain || rustup toolchain install`), so the
+# image never carries a toolchain that goes stale. Version pinned, binary
+# checked against the .sha256 published next to it.
+# renovate: datasource=github-tags depName=rust-lang/rustup
+ARG RUSTUP_VERSION=1.29.1
+ENV PATH="/home/runner/.cargo/bin:${PATH}"
+
+# One RUN for rustup and Homebrew: hadolint fails on DL3059 (consecutive RUNs).
 RUN \
+    case "${TARGETARCH}" in \
+        'amd64') triple=x86_64-unknown-linux-gnu ;; \
+        'arm64') triple=aarch64-unknown-linux-gnu ;; \
+    esac \
+    && url="https://static.rust-lang.org/rustup/archive/${RUSTUP_VERSION}/${triple}/rustup-init" \
+    && tmp=$(mktemp -d) \
+    && curl -fsSL -o "${tmp}/rustup-init" "${url}" \
+    && echo "$(curl -fsSL "${url}.sha256" | cut -d' ' -f1)  ${tmp}/rustup-init" | sha256sum -c - \
+    && chmod +x "${tmp}/rustup-init" \
+    && "${tmp}/rustup-init" -y --no-modify-path --default-toolchain none --profile minimal \
+    && rm -rf "${tmp}" \
+    && \
     case "${TARGETARCH}" in \
         'amd64') /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)" ;; \
     esac

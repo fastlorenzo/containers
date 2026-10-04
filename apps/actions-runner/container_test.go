@@ -31,4 +31,11 @@ func Test(t *testing.T) {
 	helpers.RequireCommandSucceeds(t, image, nil, "jq", "--version")
 	helpers.RequireCommandSucceeds(t, image, nil, "git", "--version")
 	helpers.RequireCommandSucceeds(t, image, nil, "docker", "--version")
+
+	// Rust repos (continuum) install their pinned toolchain per job through rustup, then create
+	// their test database and run helper scripts against a Postgres service container.
+	helpers.RequireCommandSucceeds(t, image, nil, "rustup", "--version")
+	helpers.RequireCommandSucceeds(t, image, nil, "psql", "--version")
+	helpers.RequireCommandSucceeds(t, image, nil, "createdb", "--version")
+	helpers.RequireCommandSucceeds(t, image, nil, "python3", "--version")
 }
