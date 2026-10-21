@@ -54,7 +54,7 @@ USER runner
 # image never carries a toolchain that goes stale. Version pinned, binary
 # checked against the .sha256 published next to it.
 # renovate: datasource=github-tags depName=rust-lang/rustup
-ARG RUSTUP_VERSION=1.29.1
+ARG RUSTUP_VERSION=1.29.2
 ENV PATH="/home/runner/.cargo/bin:${PATH}"
 
 # One RUN for rustup and Homebrew: hadolint fails on DL3059 (consecutive RUNs).
