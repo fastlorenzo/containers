@@ -66,6 +66,7 @@ Environment variables:
 | `REDIS_URL`   | `redis://localhost:6379/0` | Redis connection URL          |
 | `TRUSTED_HOSTS` | (empty) | Comma-separated hostnames whose current addresses are always allowed, with no sign-in (e.g. a dynamic-DNS name for home) |
 | `TRUSTED_REFRESH_SECONDS` | `60` | How often the trusted hostnames are re-resolved; a failed lookup keeps the last known addresses |
+| `TRUSTED_PROXIES` | private, CGNAT, loopback and link-local ranges | Comma-separated CIDRs of proxy hops. The client IP is the rightmost `X-Forwarded-For` entry (or the peer) outside these ranges; entries a client writes further left are ignored |
 
 ## Development
 

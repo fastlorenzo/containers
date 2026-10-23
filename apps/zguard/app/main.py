@@ -14,6 +14,18 @@ import redis
 TTL_SECONDS = int(os.getenv("TTL_SECONDS", "28800"))  # 8h default
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 CLIENT_IP_HEADER = "x-forwarded-for"
+# Proxy hops to skip when reading X-Forwarded-For from the right. The gateway
+# appends the address it accepted the connection from; anything to the left of
+# that was written by the client and is not trusted.
+TRUSTED_PROXIES = [
+    ipaddress.ip_network(n.strip())
+    for n in os.getenv(
+        "TRUSTED_PROXIES",
+        "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,100.64.0.0/10,"
+        "127.0.0.0/8,::1/128,fc00::/7,fe80::/10",
+    ).split(",")
+    if n.strip()
+]
 AUTHORIZED_DOMAIN = os.getenv("AUTHORIZED_DOMAIN", "localhost")
 # Comma-separated hostnames (e.g. a dynamic-DNS name for home) whose current
 # addresses are always allowed, with no sign-in. Re-resolved every
@@ -33,18 +45,29 @@ app = FastAPI()
 
 def get_client_ip(req: Request) -> str:
     """
-    Use the first IP in X-Forwarded-For; fall back to peer
+    Walk X-Forwarded-For (then the peer) from the right and return the first
+    address outside TRUSTED_PROXIES: the one the gateway appended for the real
+    connection. The leftmost entry is whatever the client sent, so trusting it
+    let anyone claim a whitelisted address.
     """
-    xff = req.headers.get(CLIENT_IP_HEADER)
-    if xff:
-        ip = xff.split(",")[0].strip()
-    elif req.client and req.client.host:
-        ip = req.client.host
-    else:
+    hops = [h.strip() for h in req.headers.get(CLIENT_IP_HEADER, "").split(",")]
+    if req.client and req.client.host:
+        hops.append(req.client.host)
+    ip = None
+    for hop in reversed([h for h in hops if h]):
+        try:
+            addr = ipaddress.ip_address(hop.split("%")[0])
+        except ValueError:
+            # Proxies write valid addresses; junk can only come from the client.
+            break
+        if addr.version == 6 and addr.ipv4_mapped:
+            addr = addr.ipv4_mapped
+        ip = addr
+        if not any(addr in net for net in TRUSTED_PROXIES):
+            break
+    if ip is None:
         raise HTTPException(400, "Cannot determine client IP")
-    ip = ip.split("%")[0]
-    # Normalize (also handles IPv6)
-    return str(ipaddress.ip_address(ip))
+    return str(ip)
 
 
 _trusted: dict[str, set[str]] = {}
