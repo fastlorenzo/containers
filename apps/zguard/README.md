@@ -14,6 +14,7 @@ ZGuard provides a simple IP whitelisting service that integrates with OIDC authe
 - **IPv4/IPv6 Support**: Handles both IP versions
 - **Health Checks**: Built-in health monitoring
 - **Configurable TTL**: Sliding window access expiration
+- **Trusted hosts**: Always allow the current addresses of given DNS names (follows dynamic IPs)
 
 ## API Endpoints
 
@@ -63,6 +64,8 @@ Environment variables:
 | ------------- | -------------------------- | ----------------------------- |
 | `TTL_SECONDS` | `28800` (8 hours)          | How long IPs stay whitelisted |
 | `REDIS_URL`   | `redis://localhost:6379/0` | Redis connection URL          |
+| `TRUSTED_HOSTS` | (empty) | Comma-separated hostnames whose current addresses are always allowed, with no sign-in (e.g. a dynamic-DNS name for home) |
+| `TRUSTED_REFRESH_SECONDS` | `60` | How often the trusted hostnames are re-resolved; a failed lookup keeps the last known addresses |
 
 ## Development
 

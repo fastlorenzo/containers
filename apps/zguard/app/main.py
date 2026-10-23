@@ -2,6 +2,8 @@
 
 import os
 import ipaddress
+import socket
+import threading
 import time
 from urllib.parse import urlencode, urlparse
 
@@ -13,6 +15,11 @@ TTL_SECONDS = int(os.getenv("TTL_SECONDS", "28800"))  # 8h default
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 CLIENT_IP_HEADER = "x-forwarded-for"
 AUTHORIZED_DOMAIN = os.getenv("AUTHORIZED_DOMAIN", "localhost")
+# Comma-separated hostnames (e.g. a dynamic-DNS name for home) whose current
+# addresses are always allowed, with no sign-in. Re-resolved every
+# TRUSTED_REFRESH_SECONDS so they follow a changing IP.
+TRUSTED_HOSTS = [h.strip() for h in os.getenv("TRUSTED_HOSTS", "").split(",") if h.strip()]
+TRUSTED_REFRESH_SECONDS = int(os.getenv("TRUSTED_REFRESH_SECONDS", "60"))
 
 try:
     PORT = int(os.getenv("PORT", "8080"))
@@ -40,6 +47,45 @@ def get_client_ip(req: Request) -> str:
     return str(ipaddress.ip_address(ip))
 
 
+_trusted: dict[str, set[str]] = {}
+_trusted_at = 0.0
+_trusted_lock = threading.Lock()
+
+
+def trusted_ips() -> set[str]:
+    """
+    Current addresses of TRUSTED_HOSTS, cached for TRUSTED_REFRESH_SECONDS.
+    A host that fails to resolve keeps its last known addresses, so a DNS
+    blip does not log everyone out.
+    """
+    global _trusted_at
+    if not TRUSTED_HOSTS:
+        return set()
+    with _trusted_lock:
+        if time.monotonic() - _trusted_at >= TRUSTED_REFRESH_SECONDS:
+            for host in TRUSTED_HOSTS:
+                try:
+                    infos = socket.getaddrinfo(host, None, proto=socket.IPPROTO_TCP)
+                    _trusted[host] = {
+                        str(ipaddress.ip_address(i[4][0].split("%")[0])) for i in infos
+                    }
+                except (OSError, ValueError) as e:
+                    print(f"Cannot resolve trusted host {host}: {e}")
+            _trusted_at = time.monotonic()
+        return set().union(*_trusted.values())
+
+
+def is_allowed(ip: str) -> bool:
+    """Trusted-host address, or whitelisted (sliding TTL refreshed)."""
+    if ip in trusted_ips():
+        return True
+    if r.get(f"whitelist:{ip}"):
+        # Optionally refresh TTL (“sliding window”):
+        r.expire(f"whitelist:{ip}", TTL_SECONDS)
+        return True
+    return False
+
+
 def is_authorized_redirect(url: str) -> bool:
     """
     Check if the redirect URL is authorized (same domain or subdomain).
@@ -64,11 +110,8 @@ def is_authorized_redirect(url: str) -> bool:
 
 @app.get("/check")
 def check(request: Request):
-    """Check if the client IP is whitelisted."""
-    ip = get_client_ip(request)
-    if r.get(f"whitelist:{ip}"):
-        # Optionally refresh TTL (“sliding window”):
-        r.expire(f"whitelist:{ip}", TTL_SECONDS)
+    """Check if the client IP is whitelisted or a trusted host's."""
+    if is_allowed(get_client_ip(request)):
         return Response(status_code=200)
     # Tell ingress this needs signin; body can be empty
     return Response(status_code=401)
@@ -134,9 +177,7 @@ def check_ext_authz(request: Request, full_path: str):
     On deny, redirect to /allow so the user can sign in
     (instead of the bare 401 the nginx auth-url expects from /check).
     """
-    ip = get_client_ip(request)
-    if r.get(f"whitelist:{ip}"):
-        r.expire(f"whitelist:{ip}", TTL_SECONDS)
+    if is_allowed(get_client_ip(request)):
         return Response(status_code=200)
 
     # Original URL, provided by the gateway via
