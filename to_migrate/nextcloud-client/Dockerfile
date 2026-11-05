@@ -1,4 +1,4 @@
-FROM alpine:3.24.3@sha256:c26612752c78b18faacd63c7d50f4592c2e7b0f25e0e20e82bd74e465c57ab0d
+FROM alpine:3.24.4@sha256:0f49f331d9212aff11b932863be4eb01cdf962969aa86dab7d1ee21ac6f5f52b
 LABEL MAINTAINER "Lorenzo Bernardi <docker@bernardi.be>"
 
 SHELL ["/bin/sh", "-xo", "pipefail", "-c"]
