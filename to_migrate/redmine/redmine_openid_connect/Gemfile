@@ -1,1 +1,1 @@
-gem 'httparty', '~> 0.24.0'
+gem 'httparty', '~> 0.25.0'
